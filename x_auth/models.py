@@ -1,24 +1,25 @@
-from tortoise.fields import CharField
-from x_model import User as BaseUser
+from tortoise import fields
+from x_model.model import Model as BaseModel, TsTrait
+
+from x_auth.enums import UserStatus, Role, Scope
 
 
-class User(BaseUser):
-    from pwdlib import PasswordHash
+class Model(BaseModel):
+    _allowed: Role = None  # allows access to read/write/all for all
 
-    __cc = PasswordHash.recommended()
 
-    password: str | None = CharField(60, null=True)
+class User(Model, TsTrait):
+    username: str | None = fields.CharField(95, unique=True, null=True)
+    status: UserStatus = fields.IntEnumField(UserStatus, default=UserStatus.WAIT)
+    email: str | None = fields.CharField(100, unique=True, null=True)
+    phone: int | None = fields.BigIntField(null=True)
+    role: Role = fields.IntEnumField(Role, default=Role.READER)
 
-    def pwd_vrf(self, pwd: str) -> bool:
-        return self.__cc.verify(pwd, self.password)
+    _icon = "user"
+    _name = {"username"}
 
-    @classmethod
-    async def create(cls, using_db=None, **kwargs) -> BaseUser:
-        user: User = await super().create(using_db, **kwargs)
-        if pwd := kwargs.get("password"):
-            await user.set_pwd(pwd)
-        return user
+    def _can(self, scope: Scope) -> bool:
+        return bool(self.role.value & scope)
 
-    async def set_pwd(self, pwd: str = password) -> None:
-        self.password = self.__cc.hash(pwd)
-        await self.save()
+    class Meta:
+        table_description = "Users"
