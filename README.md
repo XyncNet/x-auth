@@ -1,5 +1,5 @@
 # X-Auth
-###### Pswd-jwt authentication for x-api
+###### JWT authentication for x-api
 
 #### Requirements
 - Python >= 3.12

@@ -7,7 +7,7 @@ from starlette import status
 from starlette.requests import HTTPConnection
 
 from x_auth import AuthException
-from x_auth.enums import FailReason, UserStatus, Req, Scope
+from x_auth.enums import FailReason, UserStatus, Scope, Req
 from x_auth.models import User
 from x_auth.pydantic import AuthUser
 
@@ -48,7 +48,7 @@ reqs: dict[Req, DependsClass] = {
     Req.AUTHENTICATED: Depends(get_authenticated_user),
     Req.EXISTED: Depends(get_user_from_db),
     Req.ACTIVE: Depends(is_active),
-    Req.READ.name: Security(check_scopes, scopes=[Scope.READ.name]),
-    Req.WRITE.name: Security(check_scopes, scopes=[Scope.WRITE.name]),
-    Req.ALL.name: Security(check_scopes, scopes=[Scope.ALL.name]),
+    Req.READ: Security(check_scopes, scopes=[Scope.READ.name]),
+    Req.WRITE: Security(check_scopes, scopes=[Scope.WRITE.name]),
+    Req.ALL: Security(check_scopes, scopes=[Scope.ALL.name]),
 }
