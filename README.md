@@ -6,7 +6,7 @@
 
 ### INSTALL
 ```bash
-pip install x-auth
+pip install xn-auth
 ```
 
 ---
