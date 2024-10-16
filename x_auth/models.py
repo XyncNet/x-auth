@@ -5,7 +5,15 @@ from x_auth.enums import UserStatus, Role, Scope
 
 
 class Model(BaseModel):
-    _allowed: Role = None  # allows access to read/write/all for all
+    _allowed: int = 0  # allows access to read/write/all for all
+
+    @classmethod
+    def _req_intersects(cls, *scopes: Scope) -> set[Scope]:
+        def allows(s):
+            return s & cls._allowed
+
+        reqs = {scope for scope in Scope if not allows(scope)}
+        return {*scopes} & reqs
 
 
 class User(Model, TsTrait):

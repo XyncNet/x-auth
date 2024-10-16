@@ -26,8 +26,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/XyncNet/x-api"
-Repository = "https://github.com/XyncNet/x-api"
+Homepage = "https://github.com/XyncNet/x-auth"
+Repository = "https://github.com/XyncNet/x-auth"
 
 [build-system]
 requires = ["setuptools>=64", "setuptools-scm[toml]>=8"]
