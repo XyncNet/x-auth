@@ -38,12 +38,12 @@ def on_error(_: HTTPConnection, exc: AuthException) -> Response:
 
 
 def jwt_encode(data: AuthUser, secret: str, expires_delta: timedelta) -> str:
-    return jwt.encode({"exp": now() + expires_delta, **data.model_dump()}, secret, ALGORITHMS.NONE)
+    return jwt.encode({"exp": now() + expires_delta, **data.model_dump()}, secret, ALGORITHMS.HS256)
 
 
 def jwt_decode(jwtoken: str, secret: str) -> AuthUser:
     try:
-        payload = jwt.decode(jwtoken, secret, algorithms=[ALGORITHMS.NONE])
+        payload = jwt.decode(jwtoken, secret, algorithms=[ALGORITHMS.HS256])
     except JWTError as e:
         raise AuthException(FailReason.expired, parent=e)
     try:

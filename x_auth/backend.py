@@ -1,17 +1,14 @@
 from datetime import timedelta
 
 from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer
 from starlette import status
 from starlette.authentication import AuthenticationBackend, AuthCredentials
 from starlette.requests import HTTPConnection
 
 from x_auth import jwt_decode, jwt_encode
-from x_auth.depend import get_user_from_db
+from x_auth.depend import get_user_from_db, bearer
 from x_auth.models import User
 from x_auth.pydantic import AuthUser, UserReg, Token
-
-bearer = HTTPBearer(bearerFormat="xFormat", scheme_name="xSchema", description="xAuth", auto_error=False)
 
 
 class AuthBackend(AuthenticationBackend):
@@ -25,10 +22,10 @@ class AuthBackend(AuthenticationBackend):
         return Token(access_token=jwt_encode(user, self.secret, self.expires), token_type="bearer", user=user)
 
     # dependency
-    async def authenticate(self, conn: HTTPConnection) -> tuple[AuthCredentials, AuthUser] | None:
+    async def authenticate(self, conn: HTTPConnection, brt=bearer) -> tuple[AuthCredentials, AuthUser] | None:
         try:
             # noinspection PyTypeChecker
-            token: str = (await bearer(conn)).credentials
+            token: str = (await brt(conn)).credentials
         except AttributeError:
             return None
         user: AuthUser = jwt_decode(token, self.secret)
@@ -49,3 +46,5 @@ class AuthBackend(AuthenticationBackend):
     # api refresh token
     async def refresh_token(self, user=Depends(get_user_from_db)) -> Token:
         return self._user2tok(user)
+
+    router = reg_user, refresh_token

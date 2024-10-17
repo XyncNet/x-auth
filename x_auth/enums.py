@@ -21,8 +21,8 @@ class Role(IntEnum):
     MANAGER = Scope.READ + Scope.WRITE  # 6 - create, edit own, and read all
     ADMIN = Scope.READ + Scope.WRITE + Scope.ALL  # 7 - create and read/edit/delete all
 
-    def scopes(self) -> set[str]:
-        return {scope.name for scope in Scope if self.value & scope.value}
+    def scopes(self) -> list[str]:
+        return [scope.name for scope in Scope if self.value & scope.value]
 
 
 class Req(IntEnum):
