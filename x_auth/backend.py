@@ -16,8 +16,8 @@ class AuthBackend(AuthenticationBackend):
     expires = timedelta(minutes=15)
 
     def __init__(self, secret: str, db_user_model: type(User) = User):
-        self.secret = secret
-        self.db_user_model = db_user_model
+        self.secret: str = secret
+        self.db_user_model: User = db_user_model
         # todo: optimize auth routes forwarding
         self.routes: dict[str, tuple[callable, str]] = {
             "reg": (self.reg, "POST"),

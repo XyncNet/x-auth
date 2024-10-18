@@ -36,7 +36,7 @@ class FailReason(IntEnum):
 class AuthFailReason(IntEnum):
     no_token = 0
     username = 1
-    # password = 2
+    password = 2
     signature = 3
     # expired = 4
     status = 5
