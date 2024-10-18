@@ -8,7 +8,7 @@ from x_auth.enums import FailReason
 
 from x_auth import jwt_decode, jwt_encode, HTTPException
 from x_auth.depend import bearer, Req
-from x_auth.models import User
+from x_auth.model import User
 from x_auth.pydantic import AuthUser, UserReg, Token
 
 
