@@ -25,7 +25,7 @@ class HTTPException(BaseHTTPException):
         status_: status = status.HTTP_400_BAD_REQUEST,
         hdrs: dict = None,
     ) -> None:
-        detail = f"{reason.name}{parent and f': {parent}'}"
+        detail = f"{reason.name}{f': {parent}' if parent else ''}"
         logging.error(detail)
         super().__init__(status_, detail, hdrs)
 
@@ -56,9 +56,9 @@ def jwt_encode(data: AuthUser, secret: str, expires_delta: timedelta) -> str:
     return jwt.encode({"exp": now() + expires_delta, **data.model_dump()}, secret, ALGORITHMS.HS256)
 
 
-def jwt_decode(jwtoken: str, secret: str) -> AuthUser:
+def jwt_decode(jwtoken: str, secret: str, verify_exp: bool = True) -> AuthUser:
     try:
-        payload = jwt.decode(jwtoken, secret, algorithms=[ALGORITHMS.HS256])
+        payload = jwt.decode(jwtoken, secret, ALGORITHMS.HS256, {"verify_exp": verify_exp})
         return AuthUser(**payload)
     except (ValidationError, JWTError) as e:
         raise AuthException(AuthFailReason.signature, parent=e)

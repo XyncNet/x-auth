@@ -25,15 +25,6 @@ class Role(IntEnum):
         return [scope.name for scope in Scope if self.value & scope.value]
 
 
-class Req(IntEnum):
-    READ = 4  # read all
-    WRITE = 2  # read and write own
-    ALL = 1  # write: all
-    AUTHENTICATED = 0
-    EXISTED = 3
-    ACTIVE = 5
-
-
 class FailReason(IntEnum):
     path = 8
     query = 9

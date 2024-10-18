@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-from fastapi import Depends
 from starlette.authentication import AuthenticationBackend, AuthCredentials
 from starlette.requests import HTTPConnection
 from tortoise.exceptions import IntegrityError
@@ -8,13 +7,13 @@ from tortoise.exceptions import IntegrityError
 from x_auth.enums import FailReason
 
 from x_auth import jwt_decode, jwt_encode, HTTPException
-from x_auth.depend import get_user_from_db, bearer
+from x_auth.depend import bearer, Req
 from x_auth.models import User
 from x_auth.pydantic import AuthUser, UserReg, Token
 
 
 class AuthBackend(AuthenticationBackend):
-    expires = timedelta(days=1)
+    expires = timedelta(minutes=15)
 
     def __init__(self, secret: str, db_user_model: type(User) = User):
         self.secret = secret
@@ -31,12 +30,10 @@ class AuthBackend(AuthenticationBackend):
     # dependency
     async def authenticate(self, conn: HTTPConnection, brt=bearer) -> tuple[AuthCredentials, AuthUser] | None:
         try:
-            # noinspection PyTypeChecker
             token: str = (await brt(conn)).credentials
         except AttributeError:
             return None
-        user: AuthUser = jwt_decode(token, self.secret)
-        # noinspection PyTypeChecker
+        user: AuthUser = jwt_decode(token, self.secret, conn.scope["path"] != "/refresh")
         return AuthCredentials(scopes=user.role.scopes()), user
 
     # API ENDOINTS
@@ -51,5 +48,5 @@ class AuthBackend(AuthenticationBackend):
         return self._user2tok(user)
 
     # api refresh token
-    async def refresh(self, user=Depends(get_user_from_db)) -> Token:
+    async def refresh(self, user: AuthUser = Req.EXISTED) -> Token:
         return self._user2tok(user)
