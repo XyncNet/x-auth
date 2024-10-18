@@ -6,7 +6,7 @@ from starlette.requests import HTTPConnection
 
 from x_auth import AuthException
 from x_auth.enums import UserStatus, Scope, AuthFailReason
-from x_auth.models import User
+from x_auth.model import User
 from x_auth.pydantic import AuthUser
 
 bearer = HTTPBearer(bearerFormat="xFormat", scheme_name="xSchema", description="xAuth", auto_error=False)
