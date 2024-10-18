@@ -17,6 +17,11 @@ class AuthBackend(AuthenticationBackend):
     def __init__(self, secret: str, db_user_model: type(User) = User):
         self.secret = secret
         self.db_user_model = db_user_model
+        # todo: optimize auth routes forwarding
+        self.routes: dict[str, tuple[callable, str]] = {
+            "reg": (self.reg, "POST"),
+            "refresh": (self.refresh, "GET"),
+        }
 
     def _user2tok(self, user: AuthUser) -> Token:
         return Token(access_token=jwt_encode(user, self.secret, self.expires), token_type="bearer", user=user)
@@ -34,7 +39,7 @@ class AuthBackend(AuthenticationBackend):
 
     # API ENDOINTS
     # api reg endpoint
-    async def reg_user(self, user_reg_input: UserReg) -> Token:
+    async def reg(self, user_reg_input: UserReg) -> Token:
         data = user_reg_input.model_dump()
         try:
             db_user: User = await self.db_user_model.create(**data)
@@ -44,7 +49,5 @@ class AuthBackend(AuthenticationBackend):
         return self._user2tok(user)
 
     # api refresh token
-    async def refresh_token(self, user=Depends(get_user_from_db)) -> Token:
+    async def refresh(self, user=Depends(get_user_from_db)) -> Token:
         return self._user2tok(user)
-
-    router = reg_user, refresh_token
