@@ -35,12 +35,19 @@ class Req(IntEnum):
 
 
 class FailReason(IntEnum):
+    path = 8
+    query = 9
+    body = 10
+    method = 11
+    protocol = 12
+
+
+class AuthFailReason(IntEnum):
+    no_token = 0
     username = 1
     # password = 2
     signature = 3
-    expired = 4
+    # expired = 4
     status = 5
     permission = 6
     schema = 7
-    dep_not_installed = 8
-    undefined = 9

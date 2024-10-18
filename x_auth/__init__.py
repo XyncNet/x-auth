@@ -1,7 +1,7 @@
 import logging
 from datetime import timedelta
 
-from fastapi import HTTPException
+from fastapi import HTTPException as BaseHTTPException
 from jose import jwt, JWTError
 from jose.constants import ALGORITHMS
 from pydantic import ValidationError
@@ -11,21 +11,36 @@ from starlette.requests import HTTPConnection
 from starlette.responses import Response
 from tortoise.timezone import now
 
-from x_auth.enums import FailReason
+from x_auth.enums import FailReason, AuthFailReason
 from x_auth.pydantic import AuthUser
 
 cookie_name = "access_token"
 
 
-class AuthException(AuthenticationError, HTTPException):
-    detail: FailReason
+class HTTPException(BaseHTTPException):
+    def __init__(
+        self,
+        reason: FailReason | AuthFailReason,
+        parent: Exception | str = None,
+        status_: status = status.HTTP_400_BAD_REQUEST,
+        hdrs: dict = None,
+    ) -> None:
+        detail = f"{reason.name}{parent and f': {parent}'}"
+        logging.error(detail)
+        super().__init__(status_, detail, hdrs)
 
-    def __init__(self, detail: FailReason, clear_cookie: str | None = cookie_name, parent: Exception = None) -> None:
+
+class AuthException(HTTPException, AuthenticationError):
+    def __init__(
+        self,
+        reason: AuthFailReason,
+        parent: Exception | str = None,
+        status_: status = status.HTTP_401_UNAUTHORIZED,
+        cookie_name_: str | None = cookie_name,
+    ) -> None:
         # todo add: path=/; domain=; secure; ...
-        hdrs = {"set-cookie": clear_cookie + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT"} if clear_cookie else None
-        if parent:
-            logging.error(repr(parent))
-        super().__init__(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail.name, headers=hdrs)
+        hdrs = {"set-cookie": cookie_name_ + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT"} if cookie_name_ else None
+        super().__init__(reason=reason, parent=parent, status_=status_, hdrs=hdrs)
 
 
 def on_error(_: HTTPConnection, exc: AuthException) -> Response:
@@ -44,9 +59,6 @@ def jwt_encode(data: AuthUser, secret: str, expires_delta: timedelta) -> str:
 def jwt_decode(jwtoken: str, secret: str) -> AuthUser:
     try:
         payload = jwt.decode(jwtoken, secret, algorithms=[ALGORITHMS.HS256])
-    except JWTError as e:
-        raise AuthException(FailReason.expired, parent=e)
-    try:
         return AuthUser(**payload)
-    except ValidationError as e:
-        raise AuthException(FailReason.signature, parent=e)
+    except (ValidationError, JWTError) as e:
+        raise AuthException(AuthFailReason.signature, parent=e)

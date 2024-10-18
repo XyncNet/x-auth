@@ -1,11 +1,13 @@
 from datetime import timedelta
 
-from fastapi import Depends, HTTPException
-from starlette import status
+from fastapi import Depends
 from starlette.authentication import AuthenticationBackend, AuthCredentials
 from starlette.requests import HTTPConnection
+from tortoise.exceptions import IntegrityError
 
-from x_auth import jwt_decode, jwt_encode
+from x_auth.enums import FailReason
+
+from x_auth import jwt_decode, jwt_encode, HTTPException
 from x_auth.depend import get_user_from_db, bearer
 from x_auth.models import User
 from x_auth.pydantic import AuthUser, UserReg, Token
@@ -43,8 +45,8 @@ class AuthBackend(AuthenticationBackend):
         data = user_reg_input.model_dump()
         try:
             db_user: User = await self.db_user_model.create(**data)
-        except Exception as e:
-            raise HTTPException(status.HTTP_406_NOT_ACCEPTABLE, detail=e.__repr__())
+        except IntegrityError as e:
+            raise HTTPException(FailReason.body, e)
         user: AuthUser = AuthUser.model_validate(db_user, from_attributes=True)
         return self._user2tok(user)
 
