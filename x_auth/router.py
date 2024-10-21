@@ -4,7 +4,7 @@ from x_auth.backend import AuthBackend
 
 from x_auth.depend import Depend
 from x_auth.enums import FailReason, AuthFailReason
-from x_auth import jwt_encode, HTTPException, AuthException, Security, HttpBearer
+from x_auth import jwt_encode, HTTPException, AuthException, BearerSecurity
 from x_auth.model import User
 from x_auth.pydantic import AuthUser, UserReg, Token
 
@@ -12,7 +12,7 @@ from x_auth.pydantic import AuthUser, UserReg, Token
 class AuthRouter:
     expires = timedelta(minutes=15)
 
-    def __init__(self, secret: str, db_user_model: type(User) = User, scheme: Security = HttpBearer()):
+    def __init__(self, secret: str, db_user_model: type(User) = User, scheme: BearerSecurity = BearerSecurity()):
         self.depend = Depend(scheme)
         self.secret = secret
         self.db_user_model = db_user_model
@@ -20,7 +20,7 @@ class AuthRouter:
         # api refresh token
         async def refresh(auth_user: AuthUser = self.depend.AUTHENTICATED) -> Token:
             try:
-                db_user: User = await User[auth_user.id]
+                db_user: User = await self.db_user_model[auth_user.id]
                 auth_user = AuthUser.model_validate(db_user, from_attributes=True)
             except ConfigurationError:
                 raise AuthException(AuthFailReason.username, f"Not inicialized user model: {User})", 500)
