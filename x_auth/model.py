@@ -1,4 +1,5 @@
 from tortoise import fields
+from x_auth.pydantic import AuthUser
 from x_model.model import Model as BaseModel, TsTrait
 
 from x_auth.enums import UserStatus, Role, Scope
@@ -28,6 +29,9 @@ class User(Model, TsTrait):
 
     def _can(self, scope: Scope) -> bool:
         return bool(self.role.value & scope)
+
+    def get_auth(self) -> AuthUser:
+        return AuthUser.model_validate(self, from_attributes=True)
 
     class Meta:
         table_description = "Users"

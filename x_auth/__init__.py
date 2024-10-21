@@ -54,8 +54,8 @@ class BearerModel(HTTPBase):
 class BearerSecurity(SecurityBase):
     """HTTP Bearer token authentication"""
 
-    def __init__(self, model: BearerModel = BearerModel(), auto_error: bool = True, scheme_name: str = None):
-        self.model = model
+    def __init__(self, model_: BearerModel = BearerModel(), auto_error: bool = False, scheme_name: str = None):
+        self.model = model_
         self.scheme_name = scheme_name or self.__class__.__name__
         self.auto_error = auto_error
 

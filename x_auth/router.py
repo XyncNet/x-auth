@@ -21,7 +21,7 @@ class AuthRouter:
         async def refresh(auth_user: AuthUser = self.depend.AUTHENTICATED) -> Token:
             try:
                 db_user: User = await self.db_user_model[auth_user.id]
-                auth_user = AuthUser.model_validate(db_user, from_attributes=True)
+                auth_user: AuthUser = db_user.get_auth()
             except ConfigurationError:
                 raise AuthException(AuthFailReason.username, f"Not inicialized user model: {User})", 500)
             except Exception:
@@ -46,5 +46,4 @@ class AuthRouter:
             db_user: User = await self.db_user_model.create(**data)
         except IntegrityError as e:
             raise HTTPException(FailReason.body, e)
-        user: AuthUser = AuthUser.model_validate(db_user, from_attributes=True)
-        return self._user2tok(user)
+        return self._user2tok(db_user.get_auth())
