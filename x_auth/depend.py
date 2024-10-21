@@ -5,11 +5,11 @@ from fastapi.security import SecurityScopes
 from starlette.requests import HTTPConnection
 
 from x_auth.enums import AuthFailReason, UserStatus, Scope
-from x_auth import BearerBase, AuthUser, AuthException
+from x_auth import AuthUser, AuthException, Security as SecurityScheme
 
 
 class Depend:
-    def __init__(self, scheme: BearerBase):
+    def __init__(self, scheme: SecurityScheme):
         # For Depends
         def get_authenticated_user(conn: HTTPConnection, _: str | None = Depends(scheme)) -> AuthUser:
             if not conn.user.is_authenticated:

@@ -1,12 +1,12 @@
 from starlette.authentication import AuthenticationBackend, AuthCredentials
 from starlette.requests import HTTPConnection
 
-from x_auth import jwt_decode, BearerBase
+from x_auth import jwt_decode, Security
 from x_auth.pydantic import AuthUser
 
 
 class AuthBackend(AuthenticationBackend):
-    def __init__(self, secret: str, auth_scheme: BearerBase):
+    def __init__(self, secret: str, auth_scheme: Security):
         self.auth_scheme = auth_scheme
         self.secret = secret
 
@@ -15,4 +15,3 @@ class AuthBackend(AuthenticationBackend):
             verify_exp: bool = conn.scope["path"] != "/refresh"
             user: AuthUser = jwt_decode(token, self.secret, verify_exp)
             return AuthCredentials(scopes=user.role.scopes()), user
-        return None

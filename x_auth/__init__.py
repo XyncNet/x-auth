@@ -2,7 +2,7 @@ import logging
 from datetime import timedelta
 
 from fastapi import HTTPException as BaseHTTPException
-from fastapi.openapi.models import HTTPBearer, SecuritySchemeType
+from fastapi.openapi.models import HTTPBase, SecurityBase as SecurityBaseModel
 from fastapi.security.base import SecurityBase
 from fastapi.security.utils import get_authorization_scheme_param
 from jose import jwt, JWTError
@@ -46,13 +46,12 @@ class AuthException(HTTPException, AuthenticationError):
         super().__init__(reason=reason, parent=parent, status_=status_, hdrs=hdrs)
 
 
-class BearerBase(SecurityBase):
+class Security(SecurityBase):
     """HTTP Bearer token authentication"""
 
-    scheme_name = "bearer"
-
-    def __init__(self, auto_error: bool = True, type_: SecuritySchemeType = SecuritySchemeType.http):
-        self.model = HTTPBearer(type=type_)
+    def __init__(self, model: SecurityBaseModel, auto_error: bool = True, scheme_name: str = None):
+        self.model = model
+        self.scheme_name = scheme_name or self.__class__.__name__
         self.auto_error = auto_error
 
     async def __call__(self, conn: HTTPConnection) -> str | None:
@@ -63,12 +62,20 @@ class BearerBase(SecurityBase):
                 raise AuthException(reason=AuthFailReason.header, parent="Not authenticated")
             else:
                 return None
-        if scheme.lower() != "bearer":
+        if scheme.lower() != self.model.schema:
             if self.auto_error:
                 raise AuthException(reason=AuthFailReason.scheme, parent="Not Bearer scheme")
             else:
                 return None
         return credentials
+
+
+class HttpBearer(Security):
+    """HTTP Bearer token authentication"""
+
+    def __init__(self, auto_error: bool = False, scheme_name: str = None):
+        model = HTTPBase(scheme="bearer")
+        super().__init__(model, auto_error, scheme_name)
 
 
 def on_error(_: HTTPConnection, exc: AuthException) -> Response:
