@@ -2,6 +2,9 @@ import logging
 from datetime import timedelta
 
 from fastapi import HTTPException as BaseHTTPException
+from fastapi.openapi.models import HTTPBearer, SecuritySchemeType
+from fastapi.security.base import SecurityBase
+from fastapi.security.utils import get_authorization_scheme_param
 from jose import jwt, JWTError
 from jose.constants import ALGORITHMS
 from pydantic import ValidationError
@@ -41,6 +44,31 @@ class AuthException(HTTPException, AuthenticationError):
         # todo add: path=/; domain=; secure; ...
         hdrs = {"set-cookie": cookie_name_ + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT"} if cookie_name_ else None
         super().__init__(reason=reason, parent=parent, status_=status_, hdrs=hdrs)
+
+
+class BearerBase(SecurityBase):
+    """HTTP Bearer token authentication"""
+
+    scheme_name = "bearer"
+
+    def __init__(self, auto_error: bool = True, type_: SecuritySchemeType = SecuritySchemeType.http):
+        self.model = HTTPBearer(type=type_)
+        self.auto_error = auto_error
+
+    async def __call__(self, conn: HTTPConnection) -> str | None:
+        authorization = conn.headers.get("Authorization")
+        scheme, credentials = get_authorization_scheme_param(authorization)
+        if not (authorization and scheme and credentials):
+            if self.auto_error:
+                raise AuthException(reason=AuthFailReason.header, parent="Not authenticated")
+            else:
+                return None
+        if scheme.lower() != "bearer":
+            if self.auto_error:
+                raise AuthException(reason=AuthFailReason.scheme, parent="Not Bearer scheme")
+            else:
+                return None
+        return credentials
 
 
 def on_error(_: HTTPConnection, exc: AuthException) -> Response:

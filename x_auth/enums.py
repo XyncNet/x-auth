@@ -38,7 +38,7 @@ class AuthFailReason(IntEnum):
     username = 1
     password = 2
     signature = 3
-    # expired = 4
+    header = 4
     status = 5
     permission = 6
-    schema = 7
+    scheme = 7
