@@ -4,7 +4,7 @@ from x_auth.backend import AuthBackend
 
 from x_auth.depend import Depend
 from x_auth.enums import FailReason, AuthFailReason
-from x_auth import jwt_encode, HTTPException, AuthException, Security, HttpBearer
+from x_auth import jwt_encode, HTTPException, AuthException, BearerSecurity
 from x_auth.model import User
 from x_auth.pydantic import AuthUser, UserReg, Token
 
@@ -12,7 +12,7 @@ from x_auth.pydantic import AuthUser, UserReg, Token
 class AuthRouter:
     expires = timedelta(minutes=15)
 
-    def __init__(self, secret: str, db_user_model: type(User) = User, scheme: Security = HttpBearer()):
+    def __init__(self, secret: str, db_user_model: type(User) = User, scheme: BearerSecurity = BearerSecurity()):
         self.depend = Depend(scheme)
         self.secret = secret
         self.db_user_model = db_user_model

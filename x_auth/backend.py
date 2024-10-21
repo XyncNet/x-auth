@@ -1,12 +1,12 @@
 from starlette.authentication import AuthenticationBackend, AuthCredentials
 from starlette.requests import HTTPConnection
 
-from x_auth import jwt_decode, Security
+from x_auth import jwt_decode, BearerSecurity
 from x_auth.pydantic import AuthUser
 
 
 class AuthBackend(AuthenticationBackend):
-    def __init__(self, secret: str, auth_scheme: Security):
+    def __init__(self, secret: str, auth_scheme: BearerSecurity):
         self.auth_scheme = auth_scheme
         self.secret = secret
 
