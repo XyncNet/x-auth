@@ -1,7 +1,5 @@
-import logging
 from datetime import timedelta
 
-from fastapi import HTTPException as BaseHTTPException
 from fastapi.openapi.models import HTTPBase, SecuritySchemeType
 from fastapi.security.base import SecurityBase
 from fastapi.security.utils import get_authorization_scheme_param
@@ -13,24 +11,12 @@ from starlette.authentication import AuthenticationError
 from starlette.requests import HTTPConnection
 from starlette.responses import Response
 from tortoise.timezone import now
+from x_model import HTTPException
 
-from x_auth.enums import FailReason, AuthFailReason
+from x_auth.enums import AuthFailReason
 from x_auth.pydantic import AuthUser
 
 cookie_name = "access_token"
-
-
-class HTTPException(BaseHTTPException):
-    def __init__(
-        self,
-        reason: FailReason | AuthFailReason,
-        parent: Exception | str = None,
-        status_: status = status.HTTP_400_BAD_REQUEST,
-        hdrs: dict = None,
-    ) -> None:
-        detail = f"{reason.name}{f': {parent}' if parent else ''}"
-        logging.error(detail)
-        super().__init__(status_, detail, hdrs)
 
 
 class AuthException(HTTPException, AuthenticationError):

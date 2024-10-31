@@ -1,11 +1,13 @@
 from datetime import timedelta
 from tortoise.exceptions import IntegrityError, ConfigurationError
+from x_model import FailReason
+
 from x_auth.backend import AuthBackend
 
 from x_auth.depend import Depend
-from x_auth.enums import FailReason, AuthFailReason
+from x_auth.enums import AuthFailReason
 from x_auth import jwt_encode, HTTPException, AuthException, BearerSecurity
-from x_auth.model import User
+from x_auth.models import User
 from x_auth.pydantic import AuthUser, UserReg, Token
 
 

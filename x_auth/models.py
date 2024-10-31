@@ -1,6 +1,6 @@
 from tortoise import fields
 from x_auth.pydantic import AuthUser
-from x_model.model import Model as BaseModel, TsTrait
+from x_model.models import Model as BaseModel, TsTrait
 
 from x_auth.enums import UserStatus, Role, Scope
 

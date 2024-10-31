@@ -25,14 +25,6 @@ class Role(IntEnum):
         return [scope.name for scope in Scope if self.value & scope.value]
 
 
-class FailReason(IntEnum):
-    path = 8
-    query = 9
-    body = 10
-    method = 11
-    protocol = 12
-
-
 class AuthFailReason(IntEnum):
     no_token = 0
     username = 1
