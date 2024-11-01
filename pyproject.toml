@@ -14,15 +14,14 @@ dependencies = [
     "fastapi",
     'pwdlib[argon2]',
     "python-jose[cryptography]",
-    "xn-model",
+    "xn-model"
 ]
 
 [project.optional-dependencies]
 dev = [
     "build",
     "python-dotenv",
-    "setuptools_scm",
-    "twine",
+    "twine"
 ]
 
 [project.urls]
