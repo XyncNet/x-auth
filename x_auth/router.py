@@ -1,9 +1,9 @@
 from datetime import timedelta
 from tortoise.exceptions import IntegrityError, ConfigurationError
+from starlette.authentication import AuthenticationBackend
+from fastapi.routing import APIRoute
 from x_model import FailReason
-
 from x_auth.backend import AuthBackend
-
 from x_auth.depend import Depend
 from x_auth.enums import AuthFailReason
 from x_auth import jwt_encode, HTTPException, AuthException, BearerSecurity
@@ -14,7 +14,13 @@ from x_auth.pydantic import AuthUser, UserReg, Token
 class AuthRouter:
     expires = timedelta(minutes=15)
 
-    def __init__(self, secret: str, db_user_model: type(User) = User, scheme: BearerSecurity = BearerSecurity()):
+    def __init__(
+        self,
+        secret: str,
+        db_user_model: type(User) = User,
+        backend: AuthenticationBackend = None,
+        scheme: BearerSecurity = BearerSecurity(),
+    ):
         self.depend = Depend(scheme)
         self.secret = secret
         self.db_user_model = db_user_model
@@ -35,7 +41,7 @@ class AuthRouter:
             "reg": (self.reg, "POST"),
             "refresh": (refresh, "GET"),
         }
-        self.backend = AuthBackend(secret, scheme)
+        self.backend = backend or AuthBackend(secret, scheme)
 
     # API ENDOINTS
     def _user2tok(self, user: AuthUser) -> Token:
@@ -49,3 +55,16 @@ class AuthRouter:
         except IntegrityError as e:
             raise HTTPException(FailReason.body, e)
         return self._user2tok(db_user.get_auth())
+
+    def get_routes(self) -> list[APIRoute]:
+        return [
+            APIRoute(
+                "/" + path,
+                func,
+                tags=["Auth"],
+                methods=[method],
+                name=path.title(),
+                operation_id=path,
+            )
+            for path, (func, method) in self.routes.items()
+        ]

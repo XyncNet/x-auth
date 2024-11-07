@@ -6,18 +6,10 @@ from x_auth.enums import UserStatus, Role
 
 class UserReg(BaseModel):
     username: str
+    status: UserStatus = UserStatus.WAIT
+    role: Role = Role.READER
     email: str | None = None
     phone: int | None = None
-    role: Role = Role.READER
-    status: UserStatus = UserStatus.WAIT
-
-
-class UserUpdate(BaseModel):
-    username: str
-    status: UserStatus
-    email: str | None
-    phone: int | None
-    role: Role
 
 
 class AuthUser(BaseModel, BaseUser):
@@ -29,7 +21,7 @@ class AuthUser(BaseModel, BaseUser):
     @computed_field
     @property
     def is_authenticated(self) -> bool:
-        return self.status > UserStatus.BANNED
+        return bool(self.status)
 
     @computed_field
     @property

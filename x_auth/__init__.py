@@ -55,7 +55,7 @@ class BearerSecurity(SecurityBase):
                 return None
         if scheme.lower() != self.model.scheme:
             if self.auto_error:
-                raise AuthException(reason=AuthFailReason.scheme, parent="Not Bearer scheme")
+                raise AuthException(reason=AuthFailReason.scheme, parent="Invaid scheme")
             else:
                 return None
         return credentials
@@ -63,9 +63,10 @@ class BearerSecurity(SecurityBase):
 
 def on_error(_: HTTPConnection, exc: AuthException) -> Response:
     hdr = {}
-    if exc.status_code == 303 and "/login" in (r.path for r in _.app.routes):
+    status = getattr(exc, "status_code", 401)
+    if status == 303 and "/login" in (r.path for r in _.app.routes):
         hdr = {"Location": "/login"}
-    resp = Response(str(exc), status_code=exc.status_code, headers=hdr)
+    resp = Response(exc.__repr__(), status_code=status, headers=hdr)
     resp.delete_cookie(cookie_name)
     return resp
 
