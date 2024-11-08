@@ -48,9 +48,10 @@ class AuthRouter:
         self.backend = backend or AuthBackend(secret, scheme)
 
     # API ENDOINTS
-    def _user2tok(self, user: AuthUser) -> Token | JSONResponse:
-        token = Token(access_token=jwt_encode(user, self.secret, self.expires), user=user)
-        resp = JSONResponse(token.model_dump())
+    def _user2tok(self, user: AuthUser, tokmod: type[Token] = Token) -> Token | JSONResponse:
+        token = tokmod(access_token=jwt_encode(user, self.secret, self.expires), user=user)
+        token_dict = token.model_dump()
+        resp = JSONResponse(token_dict)
         resp.set_cookie("access_token", token.access_token, domain=f".{self.domain}", samesite="none", secure=True)
         return resp
 
