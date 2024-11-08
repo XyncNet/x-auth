@@ -4,7 +4,7 @@ from fastapi import Depends, Security
 from fastapi.security import SecurityScopes
 from starlette.requests import HTTPConnection
 
-from x_auth.enums import AuthFailReason, UserStatus, Scope
+from x_auth.enums import AuthFailReason, Scope
 from x_auth import AuthUser, AuthException, BearerSecurity
 
 
@@ -19,7 +19,7 @@ class Depend:
         self.AUTHENTICATED = Depends(get_authenticated_user)
 
         def is_active(auth_user: AuthUser = self.AUTHENTICATED):
-            if auth_user.status < UserStatus.TEST:
+            if auth_user.status < 2:
                 raise AuthException(AuthFailReason.status, parent=f"{auth_user.status.name} status denied")
 
         self.ACTIVE = Depends(is_active)

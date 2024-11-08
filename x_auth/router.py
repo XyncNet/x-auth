@@ -1,4 +1,6 @@
 from datetime import timedelta
+
+from starlette.responses import JSONResponse
 from tortoise.exceptions import IntegrityError, ConfigurationError
 from starlette.authentication import AuthenticationBackend
 from fastapi.routing import APIRoute
@@ -17,12 +19,14 @@ class AuthRouter:
     def __init__(
         self,
         secret: str,
+        domain: str,
         db_user_model: type(User) = User,
         backend: AuthenticationBackend = None,
         scheme: BearerSecurity = BearerSecurity(),
     ):
         self.depend = Depend(scheme)
         self.secret = secret
+        self.domain = domain
         self.db_user_model = db_user_model
 
         # api refresh token
@@ -44,8 +48,11 @@ class AuthRouter:
         self.backend = backend or AuthBackend(secret, scheme)
 
     # API ENDOINTS
-    def _user2tok(self, user: AuthUser) -> Token:
-        return Token(access_token=jwt_encode(user, self.secret, self.expires), user=user)
+    def _user2tok(self, user: AuthUser) -> Token | JSONResponse:
+        token = Token(access_token=jwt_encode(user, self.secret, self.expires), user=user)
+        resp = JSONResponse(token.model_dump())
+        resp.set_cookie("access_token", token.access_token, domain=f".{self.domain}", samesite="none", secure=True)
+        return resp
 
     # api reg endpoint
     async def reg(self, user_reg_input: UserReg) -> Token:
