@@ -34,3 +34,4 @@ class AuthFailReason(IntEnum):
     status = 5
     permission = 6
     scheme = 7
+    expired = 8

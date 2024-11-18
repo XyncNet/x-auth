@@ -3,7 +3,7 @@ from datetime import timedelta
 from fastapi.openapi.models import HTTPBase, SecuritySchemeType
 from fastapi.security.base import SecurityBase
 from fastapi.security.utils import get_authorization_scheme_param
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 from jose.constants import ALGORITHMS
 from pydantic import ValidationError
 from starlette import status
@@ -78,6 +78,8 @@ def jwt_encode(data: AuthUser, secret: str, expires_delta: timedelta) -> str:
 def jwt_decode(jwtoken: str, secret: str, verify_exp: bool = True) -> AuthUser:
     try:
         payload = jwt.decode(jwtoken, secret, ALGORITHMS.HS256, {"verify_exp": verify_exp})
-        return AuthUser(**payload)
+    except ExpiredSignatureError as e:
+        raise AuthException(AuthFailReason.expired, parent=e)
     except (ValidationError, JWTError) as e:
         raise AuthException(AuthFailReason.signature, parent=e)
+    return AuthUser(**payload)

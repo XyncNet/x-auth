@@ -33,6 +33,7 @@ class AuthRouter:
         async def refresh(auth_user: AuthUser = self.depend.AUTHENTICATED) -> Token:
             try:
                 db_user: User = await self.db_user_model[auth_user.id]
+                self.user_check(db_user)
                 auth_user: AuthUser = db_user.get_auth()
             except ConfigurationError:
                 raise AuthException(AuthFailReason.username, f"Not inicialized user model: {User})", 500)
@@ -46,6 +47,11 @@ class AuthRouter:
             "refresh": (refresh, "GET"),
         }
         self.backend = backend or AuthBackend(secret, scheme)
+
+    @staticmethod
+    def user_check(user: User):
+        if user.status < 2:
+            raise AuthException(AuthFailReason.status, f"Your status is still: {user.status.name})", 403)
 
     # API ENDOINTS
     def _user2tok(self, user: AuthUser, tokmod: type[Token] = Token) -> Token | JSONResponse:

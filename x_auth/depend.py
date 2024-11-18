@@ -11,18 +11,19 @@ from x_auth import AuthUser, AuthException, BearerSecurity
 class Depend:
     def __init__(self, scheme: BearerSecurity):
         # For Depends
-        def get_authenticated_user(conn: HTTPConnection, _: str | None = Depends(scheme)) -> AuthUser:
+        def authenticated(conn: HTTPConnection, _: str | None = Depends(scheme)) -> AuthUser:
             if not conn.user.is_authenticated:
                 raise AuthException(AuthFailReason.no_token)
             return conn.user
 
-        self.AUTHENTICATED = Depends(get_authenticated_user)
+        self.AUTHENTICATED = Depends(authenticated)
 
-        def is_active(auth_user: AuthUser = self.AUTHENTICATED):
+        def active(auth_user: AuthUser = self.AUTHENTICATED) -> AuthUser:
             if auth_user.status < 2:
                 raise AuthException(AuthFailReason.status, parent=f"{auth_user.status.name} status denied")
+            return auth_user
 
-        self.ACTIVE = Depends(is_active)
+        self.ACTIVE = Depends(active)
 
         def get_scopes(conn: HTTPConnection, _=self.ACTIVE) -> list[str]:
             return conn.auth.scopes
