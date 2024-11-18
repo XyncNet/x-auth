@@ -1,14 +1,13 @@
 from datetime import timedelta
 
 from starlette.responses import JSONResponse
-from tortoise.exceptions import IntegrityError, ConfigurationError
+from tortoise.exceptions import IntegrityError
 from starlette.authentication import AuthenticationBackend
 from fastapi.routing import APIRoute
 from x_model import FailReason
 from x_auth.backend import AuthBackend
 from x_auth.depend import Depend
-from x_auth.enums import AuthFailReason
-from x_auth import jwt_encode, HTTPException, AuthException, BearerSecurity
+from x_auth import jwt_encode, HTTPException, BearerSecurity
 from x_auth.models import User
 from x_auth.pydantic import AuthUser, UserReg, Token
 
@@ -28,30 +27,17 @@ class AuthRouter:
         self.secret = secret
         self.domain = domain
         self.db_user_model = db_user_model
+        self.backend = backend or AuthBackend(secret, scheme, db_user_model)
 
         # api refresh token
         async def refresh(auth_user: AuthUser = self.depend.AUTHENTICATED) -> Token:
-            try:
-                db_user: User = await self.db_user_model[auth_user.id]
-                self.user_check(db_user)
-                auth_user: AuthUser = db_user.get_auth()
-            except ConfigurationError:
-                raise AuthException(AuthFailReason.username, f"Not inicialized user model: {User})", 500)
-            except Exception:
-                raise AuthException(AuthFailReason.username, f"No user#{auth_user.id}({auth_user.username})", 404)
-
+            auth_user = await self.backend.refresh(auth_user)
             return self._user2tok(auth_user)
 
         self.routes: dict[str, tuple[callable, str]] = {
             "reg": (self.reg, "POST"),
             "refresh": (refresh, "GET"),
         }
-        self.backend = backend or AuthBackend(secret, scheme)
-
-    @staticmethod
-    def user_check(user: User):
-        if user.status < 2:
-            raise AuthException(AuthFailReason.status, f"Your status is still: {user.status.name})", 403)
 
     # API ENDOINTS
     def _user2tok(self, user: AuthUser, tokmod: type[Token] = Token) -> Token | JSONResponse:

@@ -63,10 +63,10 @@ class BearerSecurity(SecurityBase):
 
 def on_error(_: HTTPConnection, exc: AuthException) -> Response:
     hdr = {}
-    status = getattr(exc, "status_code", 401)
-    if status == 303 and "/login" in (r.path for r in _.app.routes):
+    status_ = getattr(exc, "status_code", 401)
+    if status_ == 303 and "/login" in (r.path for r in _.app.routes):
         hdr = {"Location": "/login"}
-    resp = Response(exc.__repr__(), status_code=status, headers=hdr)
+    resp = Response(exc.__repr__(), status_code=status_, headers=hdr)
     resp.delete_cookie(cookie_name)
     return resp
 
@@ -79,7 +79,7 @@ def jwt_decode(jwtoken: str, secret: str, verify_exp: bool = True) -> AuthUser:
     try:
         payload = jwt.decode(jwtoken, secret, ALGORITHMS.HS256, {"verify_exp": verify_exp})
     except ExpiredSignatureError as e:
-        raise AuthException(AuthFailReason.expired, parent=e)
+        raise e
     except (ValidationError, JWTError) as e:
-        raise AuthException(AuthFailReason.signature, parent=e)
+        raise AuthException(AuthFailReason.signature, e)
     return AuthUser(**payload)
