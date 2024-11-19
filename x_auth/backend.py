@@ -12,10 +12,18 @@ from x_auth.pydantic import AuthUser
 
 
 class AuthBackend(AuthenticationBackend):
-    def __init__(self, secret: str, auth_scheme: BearerSecurity, db_user_model: type(User) = User):
+    def __init__(
+        self,
+        secret: str,
+        auth_scheme: BearerSecurity,
+        db_user_model: type(User) = User,
+        expires: timedelta = timedelta(minutes=15),
+    ):
         self.auth_scheme = auth_scheme
         self.secret = secret
         self.db_user_model: type(User) = db_user_model
+        self.expires: timedelta = expires
+        # todo: refact! cause: secret, db_user_model, expieres - overforwarding
 
     async def refresh(self, auth_user: AuthUser) -> AuthUser:
         try:
@@ -36,7 +44,7 @@ class AuthBackend(AuthenticationBackend):
             except ExpiredSignatureError:  # auto refresh
                 user: AuthUser = jwt_decode(token, self.secret, False)
                 user = await self.refresh(user)
-                tok = jwt_encode(user, self.secret, timedelta(minutes=15))
+                tok = jwt_encode(user, self.secret, self.expires)
                 conn.scope["tok"] = tok
                 # raise AuthException(AuthFailReason.expired, tok, 410)
 
