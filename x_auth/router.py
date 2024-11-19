@@ -16,7 +16,6 @@ class AuthRouter:
     def __init__(
         self,
         secret: str,
-        domain: str,
         db_user_model: type(User) = User,
         backend: AuthenticationBackend = None,
         scheme: BearerSecurity = BearerSecurity(),
@@ -24,7 +23,6 @@ class AuthRouter:
     ):
         self.depend = Depend(scheme)
         self.secret = secret
-        self.domain = domain
         self.db_user_model = db_user_model
         self.backend = backend or AuthBackend(secret, scheme, db_user_model, expires)
         self.expires = expires
@@ -44,7 +42,7 @@ class AuthRouter:
         token = tokmod(access_token=jwt_encode(user, self.secret, self.expires), user=user)
         token_dict = token.model_dump()
         resp = JSONResponse(token_dict)
-        resp.set_cookie("access_token", token.access_token, domain=self.domain, samesite="none", secure=True)
+        resp.set_cookie("access_token", token.access_token, path="/", secure=True, samesite="none")
         return resp
 
     # api reg endpoint

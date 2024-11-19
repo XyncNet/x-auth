@@ -27,8 +27,11 @@ class AuthException(HTTPException, AuthenticationError):
         status_: status = status.HTTP_401_UNAUTHORIZED,
         cookie_name_: str | None = cookie_name,
     ) -> None:
-        # todo add: path=/; domain=; secure; ...
-        hdrs = {"set-cookie": cookie_name_ + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT"} if cookie_name_ else None
+        hdrs = (
+            {"set-cookie": cookie_name_ + "=; Path=/; Secure; SameSite=None; Expires=Thu, 01 Jan 1970 00:00:00 GMT"}
+            if cookie_name_
+            else None
+        )
         super().__init__(reason=reason, parent=parent, status_=status_, hdrs=hdrs)
 
 
@@ -67,7 +70,7 @@ def on_error(_: HTTPConnection, exc: AuthException) -> Response:
     if status_ == 303 and "/login" in (r.path for r in _.app.routes):
         hdr = {"Location": "/login"}
     resp = Response(exc.__repr__(), status_code=status_, headers=hdr)
-    resp.delete_cookie(cookie_name)
+    resp.delete_cookie(cookie_name, "/", secure=True, samesite="none")
     return resp
 
 
