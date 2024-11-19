@@ -11,7 +11,7 @@ class AuthRefreshMiddleware:
             return await self.app(scope, receive, send)
 
         async def send_wrapper(msg: Message) -> None:
-            if msg["type"] == "http.response.start" and (tok := scope.pop("tok")):
+            if msg["type"] == "http.response.start" and (tok := scope.get("tok")):
                 ck = f"access_token={tok}; SameSite=None; Secure; Path=/; Domain={self.domain}"
                 msg["headers"].append((b"set-cookie", ck.encode()))
 
