@@ -42,7 +42,7 @@ class AuthRouter:
         token = tokmod(access_token=jwt_encode(user, self.secret, self.expires), user=user)
         token_dict = token.model_dump()
         resp = JSONResponse(token_dict)
-        resp.set_cookie("access_token", token.access_token, path="/", secure=True, samesite="none")
+        resp.set_cookie("access_token", token.access_token, path="/", domain=".xync.net", secure=True, samesite="none")
         return resp
 
     # api reg endpoint
