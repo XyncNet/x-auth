@@ -1,4 +1,7 @@
+import logging
+
 from starlette.types import ASGIApp, Receive, Scope, Send, Message
+from x_auth.pydantic import AuthUser
 
 
 class AuthRefreshMiddleware:
@@ -14,6 +17,8 @@ class AuthRefreshMiddleware:
             if msg["type"] == "http.response.start" and (tok := scope.get("tok")):
                 ck = f"access_token={tok}; SameSite=None; Secure; Path=/; Domain={self.domain}"
                 msg["headers"].append((b"set-cookie", ck.encode()))
+                user: AuthUser = scope["user"]
+                logging.info(f"{user.display_name}:{user.id} updated token")
 
             await send(msg)
 
