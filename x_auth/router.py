@@ -13,8 +13,6 @@ from x_auth.pydantic import AuthUser, UserReg, Token
 
 
 class AuthRouter:
-    expires = timedelta(minutes=15)
-
     def __init__(
         self,
         secret: str,
@@ -22,12 +20,14 @@ class AuthRouter:
         db_user_model: type(User) = User,
         backend: AuthenticationBackend = None,
         scheme: BearerSecurity = BearerSecurity(),
+        expires: timedelta = timedelta(minutes=15),
     ):
         self.depend = Depend(scheme)
         self.secret = secret
         self.domain = domain
         self.db_user_model = db_user_model
-        self.backend = backend or AuthBackend(secret, scheme, db_user_model)
+        self.backend = backend or AuthBackend(secret, scheme, db_user_model, expires)
+        self.expires = expires
 
         # api refresh token
         async def refresh(auth_user: AuthUser = self.depend.AUTHENTICATED) -> Token:
@@ -44,7 +44,7 @@ class AuthRouter:
         token = tokmod(access_token=jwt_encode(user, self.secret, self.expires), user=user)
         token_dict = token.model_dump()
         resp = JSONResponse(token_dict)
-        resp.set_cookie("access_token", token.access_token, domain=f".{self.domain}", samesite="none", secure=True)
+        resp.set_cookie("access_token", token.access_token, domain=self.domain, samesite="none", secure=True)
         return resp
 
     # api reg endpoint
