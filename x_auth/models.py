@@ -1,8 +1,9 @@
 from tortoise import fields
-from x_auth.pydantic import AuthUser
+
 from x_model.models import Model as BaseModel, TsTrait
 
 from x_auth.enums import UserStatus, Role, Scope
+from x_auth.pydantic import AuthUser
 
 
 class Model(BaseModel):
@@ -15,6 +16,9 @@ class Model(BaseModel):
 
         reqs = {scope for scope in Scope if not allows(scope)}
         return {*scopes} & reqs
+
+    class Meta:
+        abstract = True
 
 
 class User(Model, TsTrait):
