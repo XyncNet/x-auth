@@ -4,14 +4,13 @@ requires-python = ">=3.11"
 authors = [
     {name = "Artemiev", email = "mixartemev@gmail.com"},
 ]
-keywords = ["starlette", "fastapi", "auth"]
+keywords = ["litestar", "jwt", "auth"]
 description = "Auth adapter for XN-Api framework"
 readme = "README.md"
 license = {text = "MIT"}
 dynamic = ["version"]
 
 dependencies = [
-    "fastapi",
     'pwdlib[argon2]',
     "python-jose[cryptography]",
     "xn-model"
