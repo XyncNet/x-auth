@@ -1,6 +1,5 @@
 from aiogram.types import User as TgUser
 from aiogram.utils.web_app import WebAppUser
-from pydantic import BaseModel
 from tortoise.fields import BigIntField, BooleanField, CharField, IntEnumField
 from x_model.models import Model, PydIn
 
@@ -9,13 +8,13 @@ from x_auth.types import AuthUser
 
 
 class UserTg(Model):
-    class Upd(BaseModel, PydIn):
+    class Upd(PydIn):
         id: int
         username: str
         first_name: str
         last_name: str | None
         lang: Lang | None
-        pic: str | None
+        pic: str | None = None
         blocked: bool = False
 
     _pydIn = Upd
@@ -53,3 +52,6 @@ class UserTg(Model):
     @classmethod
     async def is_blocked(cls, sid: str) -> bool:
         return (await cls[int(sid)]).blocked
+
+    class Meta:
+        abstract = True
