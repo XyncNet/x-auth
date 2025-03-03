@@ -1,15 +1,15 @@
 import logging
+from datetime import datetime, timezone
 from typing import Sequence, Any
 
-from anyio.from_thread import start_blocking_portal
 from jwt import ExpiredSignatureError
-from litestar.datastructures import MutableScopeHeaders
+from litestar.datastructures import MutableScopeHeaders, Headers
 from litestar.types import Scope, Receive, Send, Message
 from litestar.security.jwt import JWTCookieAuthenticationMiddleware, Token
 from litestar.security.jwt.token import JWTDecodeOptions
+from msgspec import convert
 
 from x_auth.exceptions import ExpiredSignature
-from x_auth.models import UserTg
 
 
 class Tok(Token):
@@ -29,12 +29,10 @@ class Tok(Token):
             logging.warning("JWToken expired")
             options["verify_exp"] = False
             payload = super().decode_payload(encoded_token, secret, algorithms, issuer, audience, options)
-            with start_blocking_portal(backend="asyncio") as port:
-                if port.call(UserTg.is_blocked, payload["sub"]):
-                    logging.error(f"User#{payload['sub']} can't refresh. Blocked!")
-                    raise e
-            encoded_token = super().encode(secret, algorithms[0])  # check where from getting algorithms
-            raise ExpiredSignature(encoded_token)
+            payload["exp"] = int(datetime.now(timezone.utc).timestamp()) + payload["exp"] - payload["iat"]
+            tok = convert(payload, cls, strict=False)
+            encoded_token = tok.encode(secret, algorithms[0])  # check where from getting algorithms
+            raise ExpiredSignature(int(payload["sub"]), encoded_token, e)
 
 
 class JWTAuthMiddleware(JWTCookieAuthenticationMiddleware):
@@ -42,12 +40,17 @@ class JWTAuthMiddleware(JWTCookieAuthenticationMiddleware):
         try:
             await super().__call__(scope, receive, send)
         except ExpiredSignature as e:
-            uet: str = e.args[0]  # updated encoded token
+            uid, uet, _e = e.args  # uid, updated encoded token
+            if await scope["app"].state.get("user_model").is_blocked(uid):
+                logging.error(f"User#{uid} can't refresh. Blocked!")
+                raise _e
 
             async def send_wrapper(msg: Message) -> None:
                 if msg["type"] == "http.response.start":
                     headers = MutableScopeHeaders.from_message(msg)
-                    headers["Set-Cookie"] = f"access_token={uet}; Domain=.xync.net; Path=/; SameSite=none; Secure"
+                    headers["Set-Cookie"] = f"token={uet}; Domain=.xync.net; Path=/; SameSite=none; Secure"
                 await send(msg)
 
+            scope["state"]["_ls_connection_state"].headers
+            scope["state"]["_ls_connection_state"].headers = Headers({"authorization": "Bearer " + uet})
             await super().__call__(scope, receive, send_wrapper)

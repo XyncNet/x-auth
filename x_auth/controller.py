@@ -12,7 +12,7 @@ from x_auth.types import AuthUser
 
 
 async def retrieve_user_handler(token: Tok, _cn: ASGIConnection) -> AuthUser:
-    return AuthUser(id=token.sub, role=token.extras["role"], status=token.extras["status"])
+    return AuthUser(id=token.sub, role=token.extras["role"], blocked=token.extras["blocked"])
 
 
 async def revoked_token_handler(token: Tok, _cn: ASGIConnection) -> bool:
@@ -21,7 +21,7 @@ async def revoked_token_handler(token: Tok, _cn: ASGIConnection) -> bool:
 
 class Auth:
     def __init__(self, sec: str, user_model: type[UserTg] = UserTg):
-        self.jwt = JWTCookieAuth[AuthUser, Tok](
+        self.jwt = JWTCookieAuth(  # [AuthUser, Tok]
             retrieve_user_handler=retrieve_user_handler,
             revoked_token_handler=revoked_token_handler,
             default_token_expiration=timedelta(minutes=1),
