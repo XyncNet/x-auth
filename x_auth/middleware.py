@@ -51,6 +51,7 @@ class JWTAuthMiddleware(JWTCookieAuthenticationMiddleware):
                     headers["Set-Cookie"] = f"token={uet}; Domain=.xync.net; Path=/; SameSite=none; Secure"
                 await send(msg)
 
-            scope["state"]["_ls_connection_state"].headers
+            # todo: refact dirty header update
+            # noinspection PyUnresolvedReferences
             scope["state"]["_ls_connection_state"].headers = Headers({"authorization": "Bearer " + uet})
             await super().__call__(scope, receive, send_wrapper)

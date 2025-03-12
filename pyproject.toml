@@ -11,8 +11,8 @@ license = {text = "MIT"}
 dynamic = ["version"]
 
 dependencies = [
-    'pwdlib[argon2]',
-    "python-jose[cryptography]",
+    'msgspec',
+    "pyjwt",
     "xn-model"
 ]
 

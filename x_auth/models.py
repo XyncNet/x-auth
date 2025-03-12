@@ -1,14 +1,15 @@
 from aiogram.types import User as TgUser
 from aiogram.utils.web_app import WebAppUser
 from tortoise.fields import BigIntField, BooleanField, CharField, IntEnumField
-from x_model.models import Model, PydIn
+from x_model.models import Model
+from x_model.types import Upd
 
 from x_auth.enums import Lang, Role
 from x_auth.types import AuthUser
 
 
 class UserTg(Model):
-    class Upd(PydIn):
+    class Upd(Upd):
         id: int
         username: str
         first_name: str
@@ -17,7 +18,7 @@ class UserTg(Model):
         pic: str | None = None
         blocked: bool = False
 
-    _pydIn = Upd
+    _in_type = Upd
 
     id: int = BigIntField(True, description="tg id")
     username: str | None = CharField(63, unique=True, null=True)
@@ -33,7 +34,7 @@ class UserTg(Model):
 
     @classmethod
     async def tg2in(cls, u: TgUser | WebAppUser, blocked: bool = None) -> Upd:
-        user = cls._pydIn(
+        user = cls._in_type(
             **{**u.model_dump(), "username": u.username or u.id, "lang": u.language_code and Lang[u.language_code]}
         )
         user.pic = (
@@ -44,10 +45,6 @@ class UserTg(Model):
         if blocked is not None:
             user.blocked = blocked
         return user
-
-    @classmethod
-    async def upsert(cls, obj: Upd) -> tuple["UserTg", bool]:
-        return await cls.update_or_create(**obj.df_unq())
 
     @classmethod
     async def is_blocked(cls, sid: str) -> bool:
