@@ -33,7 +33,7 @@ class Auth:
         )
 
         @post("/auth/tma", tags=["Auth"], description="Gen JWToken from tg initData")
-        async def tma(init_data: str) -> Response[user_model.pyd()]:
+        async def tma(init_data: str) -> Response[user_model.out_type()]:
             try:
                 twaid: WebAppInitData = safe_parse_webapp_init_data(self.jwt.token_secret, init_data)
             except ValueError:
