@@ -11,7 +11,7 @@ from x_auth.types import AuthUser
 class UserTg(Model):
     class Upd(Upd):
         id: int
-        username: str
+        username: str | int
         first_name: str
         last_name: str | None
         lang: Lang | None
