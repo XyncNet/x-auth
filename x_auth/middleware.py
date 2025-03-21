@@ -29,7 +29,12 @@ class Tok(Token):
             logging.warning("JWToken expired")
             options["verify_exp"] = False
             payload = super().decode_payload(encoded_token, secret, algorithms, issuer, audience, options)
-            payload["exp"] = int(datetime.now(timezone.utc).timestamp()) + payload["exp"] - payload["iat"]
+            payload.update(
+                {
+                    "exp": (now := int(datetime.now(timezone.utc).timestamp())) + (payload["exp"] - payload["iat"]),
+                    "iat": now,
+                }
+            )
             tok = convert(payload, cls, strict=False)
             encoded_token = tok.encode(secret, algorithms[0])  # check where from getting algorithms
             raise ExpiredSignature(int(payload["sub"]), encoded_token, e)
