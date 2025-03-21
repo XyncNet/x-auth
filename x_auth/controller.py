@@ -40,10 +40,12 @@ class Auth:
                 raise NotAuthorizedException(detail="Tg Initdata invalid")
             user_in = await user_model.tg2in(twaid.user)
             db_user, cr = await user_model.update_or_create(**user_in.df_unq())  # on login: update user in db from tg
-            return self.jwt.login(
+            rl = self.jwt.login(
                 identifier=str(db_user.id),
                 token_extras={"role": db_user.role, "blocked": db_user.blocked},
                 response_body=await db_user.one(),
             )
+            rl.cookies[0].value = rl.cookies[0].value.replace("Bearer ", "")  # dirty hack
+            return rl
 
         self.handler = tma
