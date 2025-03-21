@@ -20,7 +20,7 @@ async def revoked_token_handler(token: Tok, _cn: ASGIConnection) -> bool:
 
 
 class Auth:
-    def __init__(self, sec: str, user_model: type[UserTg] = UserTg):
+    def __init__(self, sec: str, user_model: type[UserTg] = UserTg, exc_paths: list[str] = None):
         self.jwt = JWTCookieAuth(  # [AuthUser, Tok]
             retrieve_user_handler=retrieve_user_handler,
             revoked_token_handler=revoked_token_handler,
@@ -29,7 +29,7 @@ class Auth:
             token_secret=sec,
             token_cls=Tok,
             # endpoints excluded from authentication: (login and openAPI docs)
-            exclude=["/auth/tma", "/schema", "/public/"],
+            exclude=["/schema", "/auth", "/public"] + (exc_paths or []),
         )
 
         @post("/auth/tma", tags=["Auth"], description="Gen JWToken from tg initData")
