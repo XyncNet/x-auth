@@ -28,24 +28,23 @@ class Auth:
             authentication_middleware_class=JWTAuthMiddleware,
             token_secret=sec,
             token_cls=Tok,
+            domain=".xync.net",
             # endpoints excluded from authentication: (login and openAPI docs)
             exclude=["/schema", "/auth", "/public"] + (exc_paths or []),
         )
 
         @post("/auth/tma", tags=["Auth"], description="Gen JWToken from tg initData")
-        async def tma(init_data: str) -> Response[user_model.out_type()]:
+        async def tma(tid: str) -> Response[user_model.out_type()]:
             try:
-                twaid: WebAppInitData = safe_parse_webapp_init_data(self.jwt.token_secret, init_data)
+                twaid: WebAppInitData = safe_parse_webapp_init_data(self.jwt.token_secret, tid)
             except ValueError:
                 raise NotAuthorizedException(detail="Tg Initdata invalid")
             user_in = await user_model.tg2in(twaid.user)
             db_user, cr = await user_model.update_or_create(**user_in.df_unq())  # on login: update user in db from tg
-            rl = self.jwt.login(
+            return self.jwt.login(
                 identifier=str(db_user.id),
                 token_extras={"role": db_user.role, "blocked": db_user.blocked},
                 response_body=await db_user.one(),
             )
-            rl.cookies[0].value = rl.cookies[0].value.replace("Bearer ", "")  # dirty hack
-            return rl
 
         self.handler = tma
