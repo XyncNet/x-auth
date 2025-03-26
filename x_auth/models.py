@@ -15,7 +15,6 @@ class UserTg(Model):
         first_name: str
         last_name: str | None
         lang: Lang | None
-        pic: str | None = None
         blocked: bool = False
 
     _in_type = Upd
@@ -24,7 +23,6 @@ class UserTg(Model):
     username: str | None = CharField(63, unique=True, null=True)
     first_name: str | None = CharField(63)
     last_name: str | None = CharField(31, null=True)
-    pic: str | None = CharField(95, null=True)
     blocked: bool = BooleanField(default=False)
     lang: Lang | None = IntEnumField(Lang, default=Lang.ru, null=True)
     role: Role = IntEnumField(Role, default=Role.READER)
@@ -37,11 +35,6 @@ class UserTg(Model):
         user = cls._in_type(
             **{**u.model_dump(), "username": u.username or u.id, "lang": u.language_code and Lang[u.language_code]}
         )
-        user.pic = (
-            (gpp := await u.get_profile_photos(0, 1)).photos and gpp.photos[0][-1].file_unique_id
-            if type(u) is TgUser
-            else u.photo_url
-        )  # (u.photo_url[0] if u.photo_url else None)
         if blocked is not None:
             user.blocked = blocked
         return user

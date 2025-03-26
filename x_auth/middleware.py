@@ -53,7 +53,7 @@ class JWTAuthMiddleware(JWTCookieAuthenticationMiddleware):
             async def send_wrapper(msg: Message) -> None:
                 if msg["type"] == "http.response.start":
                     headers = MutableScopeHeaders.from_message(msg)
-                    headers["Set-Cookie"] = f"token={uet}; Domain=.xync.net; Path=/; SameSite=none; Secure"
+                    headers["Set-Cookie"] = f"token=Bearer {uet}; Domain=.xync.net; Path=/; SameSite=none; Secure"
                 await send(msg)
 
             # todo: refact dirty header update
