@@ -12,7 +12,7 @@ from x_auth.types import AuthUser
 
 
 async def retrieve_user_handler(token: Tok, _cn: ASGIConnection) -> AuthUser:
-    return AuthUser(id=token.sub, role=token.extras["role"], blocked=token.extras["blocked"])
+    return AuthUser(id=int(token.sub), role=token.extras["role"], blocked=token.extras["blocked"])
 
 
 async def revoked_token_handler(token: Tok, _cn: ASGIConnection) -> bool:
