@@ -34,7 +34,7 @@ class Auth:
         )
 
         @post("/auth/tma", tags=["Auth"], description="Gen JWToken from tg initData")
-        async def tma(tid: str) -> Response[user_model.out_type()]:
+        async def tma(tid: str) -> Response[user_model.in_type(True)]:
             try:
                 twaid: WebAppInitData = safe_parse_webapp_init_data(self.jwt.token_secret, tid)
             except ValueError:
@@ -44,7 +44,7 @@ class Auth:
             res = self.jwt.login(
                 identifier=str(db_user.id),
                 token_extras={"role": db_user.role, "blocked": db_user.blocked},
-                response_body=await db_user.one(),
+                response_body=user_model.validate(dict(db_user)),
             )
             res.cookies[0].httponly = False
             return res
