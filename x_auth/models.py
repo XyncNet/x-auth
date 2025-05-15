@@ -84,7 +84,7 @@ class Proxy(Model, TsTrait):
     port: str = IntField()
     username: str = CharField(63)
     password: str = CharField(63)
-    success: bool = BooleanField(null=True)
+    valid: bool = BooleanField(null=True)
     country: ForeignKeyRelation[Country] = ForeignKeyField("models.Country", "proxies", null=True)  # todo rm nullable
 
     class Meta:
@@ -134,7 +134,7 @@ class Proxy(Model, TsTrait):
                 await cls.create(**df, host=r.proxy_address, port=r.port, id=r.id)
 
     @staticmethod
-    async def replaced(wst: str):
+    async def get_replaced(wst: str):
         async with ClientSession("https://proxy.webshare.io/api/v2/") as s:
             resp = await s.get("proxy/list/replaced/", headers={"Authorization": f"Token {wst}"})
             lst = (await resp.json())["results"]

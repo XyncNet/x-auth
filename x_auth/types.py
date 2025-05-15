@@ -25,27 +25,13 @@ class Proxy(Struct):
     created_at: datetime
 
 
-class ToReplace(Struct):
-    type: Literal["ip_range",]
-    ip_ranges: list[str]
-
-
-class ReplaceWith(Struct):
-    type: Literal["country",]
-    country_code: str
-
-
 class Replacement(Struct):
     id: int
-    to_replace: ToReplace
-    replace_with: list[ReplaceWith]
-    dry_run: bool
-    state: str
-    proxies_removed: int
-    proxies_added: int
-    reason: str
+    reason: Literal["auto_invalidated", "auto_out_of_rotation"]
+    replaced_with: str
+    replaced_with_port: int
+    replaced_with_country_code: str
+    proxy: str
+    proxy_port: int
+    proxy_country_code: str
     created_at: datetime
-    error: str = None
-    error_code: str = None
-    dry_run_completed_at: datetime = None
-    completed_at: datetime = None
