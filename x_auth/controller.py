@@ -7,7 +7,7 @@ from litestar.exceptions import NotAuthorizedException
 from litestar.security.jwt import JWTCookieAuth
 
 from x_auth.middleware import JWTAuthMiddleware, Tok
-from x_auth.models import UserTg
+from x_auth.models import User
 from x_auth.types import AuthUser
 
 
@@ -20,7 +20,7 @@ async def revoked_token_handler(token: Tok, _cn: ASGIConnection) -> bool:
 
 
 class Auth:
-    def __init__(self, sec: str, user_model: type[UserTg] = UserTg, exc_paths: list[str] = None):
+    def __init__(self, sec: str, user_model: type[User] = User, exc_paths: list[str] = None):
         self.jwt = JWTCookieAuth(  # [AuthUser, Tok]
             retrieve_user_handler=retrieve_user_handler,
             revoked_token_handler=revoked_token_handler,
