@@ -142,10 +142,38 @@ class Proxy(Model, TsTrait):
             return reps
 
 
+class Dc(TortModel):
+    id: int = SmallIntField(True)
+    ip = CharField(15, unique=True)
+    pub = CharField(495)
+
+    apps: BackwardFKRelation["App"]
+
+
+class Fcm(TortModel):
+    id: int = SmallIntField(True)
+    json: dict = JSONField(default={})
+
+    apps: BackwardFKRelation["App"]
+
+
+class App(TortModel):
+    hsh = CharField(32, unique=True)
+    dc: ForeignKeyRelation[Dc] = ForeignKeyField("models.Dc", "apps", default=2)
+    dc_id: int
+    title = CharField(127)
+    short = CharField(95)
+    fcm: ForeignKeyNullableRelation[Fcm] = ForeignKeyField("models.Fcm", "apps", null=True)
+    fcm_id: int
+
+    sessions: BackwardFKRelation["Session"]
+
+
 class Session(TortModel):
     id = CharField(127, primary_key=True)
     dc_id = IntField(null=True)
-    api_id = IntField(null=True)
+    api: ForeignKeyRelation[App] = ForeignKeyField("models.App", "sessions")
+    api_id: int
     test_mode = BooleanField(default=False)
     auth_key = BinaryField(null=True)
     date = IntField(null=True)  # todo: refact to datetime?
