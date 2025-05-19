@@ -68,8 +68,8 @@ class User(Model):
     async def is_blocked(cls, sid: str) -> bool:
         return (await cls[int(sid)]).blocked
 
-    class Meta:
-        abstract = True
+    # class Meta:
+    #     abstract = True
 
 
 class Country(Model):
@@ -169,7 +169,7 @@ class App(Model):
     ver = CharField(18, default="0.0.1")
     fcm: ForeignKeyNullableRelation[Fcm] = ForeignKeyField("models.Fcm", "apps", null=True)
     fcm_id: int
-    # owner: OneToOneRelation["User"] = OneToOneField("models.User", "app")
+    owner: OneToOneRelation["User"] = OneToOneField("models.User", "app")
 
     sessions: BackwardFKRelation["Session"]
 
