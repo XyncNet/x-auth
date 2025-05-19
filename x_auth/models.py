@@ -34,6 +34,7 @@ from x_auth.types import AuthUser
 class Username(TortModel):
     id: int = BigIntField(True, description="tg_id")
     username: str = CharField(127, null=True)
+    phone = BigIntField(null=True)
 
     user: BackwardOneToOneRelation["User"]
     peers: BackwardFKRelation["Peer"]
@@ -48,6 +49,8 @@ class User(Model):
     blocked: bool = BooleanField(default=False)
     lang: Lang | None = IntEnumField(Lang, default=Lang.ru, null=True)
     role: Role = IntEnumField(Role, default=Role.READER)
+
+    app: BackwardOneToOneRelation["App"]
 
     def get_auth(self) -> AuthUser:
         return AuthUser.model_validate(self, from_attributes=True)
@@ -145,7 +148,7 @@ class Proxy(Model, TsTrait):
 class Dc(TortModel):
     id: int = SmallIntField(True)
     ip = CharField(15, unique=True)
-    pub = CharField(495)
+    pub = CharField(495, null=True)
 
     apps: BackwardFKRelation["App"]
 
@@ -157,29 +160,30 @@ class Fcm(TortModel):
     apps: BackwardFKRelation["App"]
 
 
-class App(TortModel):
+class App(Model):
     hsh = CharField(32, unique=True)
     dc: ForeignKeyRelation[Dc] = ForeignKeyField("models.Dc", "apps", default=2)
     dc_id: int
     title = CharField(127)
-    short = CharField(95)
+    short = CharField(76)
+    ver = CharField(18, default="0.0.1")
     fcm: ForeignKeyNullableRelation[Fcm] = ForeignKeyField("models.Fcm", "apps", null=True)
     fcm_id: int
+    # owner: OneToOneRelation["User"] = OneToOneField("models.User", "app")
 
     sessions: BackwardFKRelation["Session"]
 
 
 class Session(TortModel):
-    id = CharField(127, primary_key=True)
-    dc_id = IntField(null=True)
+    id = CharField(85, primary_key=True)
     api: ForeignKeyRelation[App] = ForeignKeyField("models.App", "sessions")
     api_id: int
     test_mode = BooleanField(default=False)
     auth_key = BinaryField(null=True)
-    date = IntField(null=True)  # todo: refact to datetime?
+    date = IntField(default=0)  # todo: refact to datetime?
     user: ForeignKeyNullableRelation[Username] = ForeignKeyField("models.Username", "sessions", null=True)
     user_id: int
-    is_bot = BooleanField(null=True)
+    is_bot = CharField(42, null=True)
     state: dict = JSONField(default={})
     proxy: ForeignKeyNullableRelation[Proxy] = ForeignKeyField("models.Proxy", "sessions", null=True)
 
@@ -187,7 +191,7 @@ class Session(TortModel):
     update_states: BackwardFKRelation["UpdateState"]
 
     class Meta:
-        unique_together = (("user_id", "dc_id"),)
+        unique_together = (("user_id", "api_id"),)
 
 
 class Peer(TortModel):
@@ -197,7 +201,7 @@ class Peer(TortModel):
     session: ForeignKeyRelation[Session] = ForeignKeyField("models.Session", "peers")
     session_id: int
     type = CharField(127)
-    phone_number = BigIntField(null=True)
+    phone_number = BigIntField(null=True)  # todo: rm (already moved to Username.phone)
     last_update_on: datetime | None = DatetimeSecField(auto_now=True)
 
     class Meta:
