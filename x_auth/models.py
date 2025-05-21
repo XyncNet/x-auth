@@ -4,6 +4,7 @@ from aiogram.types import User as TgUser
 from aiogram.utils.web_app import WebAppUser
 from aiohttp import ClientSession
 from msgspec import convert
+from pyrogram.enums.client_platform import ClientPlatform
 from tortoise.fields import (
     BigIntField,
     BooleanField,
@@ -21,6 +22,8 @@ from tortoise.fields import (
     ForeignKeyNullableRelation,
     JSONField,
 )
+from tortoise.fields.data import CharEnumFieldInstance
+
 from x_auth import types
 from x_model.field import DatetimeSecField
 from x_model.models import Model, TsTrait
@@ -151,6 +154,7 @@ class Dc(TortModel):
     pub = CharField(495, null=True)
 
     apps: BackwardFKRelation["App"]
+    sessions: BackwardFKRelation["App"]
 
 
 class Fcm(TortModel):
@@ -169,6 +173,7 @@ class App(Model):
     ver = CharField(18, default="0.0.1")
     fcm: ForeignKeyNullableRelation[Fcm] = ForeignKeyField("models.Fcm", "apps", null=True)
     fcm_id: int
+    platform: ClientPlatform = CharEnumFieldInstance(ClientPlatform)
     owner: OneToOneRelation["User"] = OneToOneField("models.User", "app")
 
     sessions: BackwardFKRelation["Session"]
@@ -178,6 +183,8 @@ class Session(TortModel):
     id = CharField(85, primary_key=True)
     api: ForeignKeyRelation[App] = ForeignKeyField("models.App", "sessions")
     api_id: int
+    dc: ForeignKeyRelation[Dc] = ForeignKeyField("models.Dc", "sessions", default=2)
+    dc_id: int
     test_mode = BooleanField(default=False)
     auth_key = BinaryField(null=True)
     date = IntField(default=0)  # todo: refact to datetime?
