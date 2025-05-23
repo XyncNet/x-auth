@@ -1,10 +1,9 @@
 from datetime import datetime
 
-from aiogram.types import User as TgUser
-from aiogram.utils.web_app import WebAppUser
 from aiohttp import ClientSession
 from msgspec import convert
 from pyrogram.enums.client_platform import ClientPlatform
+from pyrogram.types import User as TgUser
 from tortoise.fields import (
     BigIntField,
     BooleanField,
@@ -15,6 +14,7 @@ from tortoise.fields import (
     IntField,
     BinaryField,
     OneToOneRelation,
+    OneToOneNullableRelation,
     OneToOneField,
     SmallIntField,
     BackwardOneToOneRelation,
@@ -41,7 +41,7 @@ class Username(TortModel):
 
     user: BackwardOneToOneRelation["User"]
     peers: BackwardFKRelation["Peer"]
-    sessions: BackwardFKRelation["Session"]
+    session: BackwardOneToOneRelation["Session"]
 
 
 class User(Model):
@@ -59,9 +59,15 @@ class User(Model):
         return AuthUser.model_validate(self, from_attributes=True)
 
     @classmethod
-    async def tg2in(cls, u: TgUser | WebAppUser, blocked: bool = None) -> BaseUpd:
+    async def tg2in(cls, u: TgUser, blocked: bool = None) -> BaseUpd:
+        un, _ = await cls._meta.fields_map["username"].related_model.update_or_create({"username": u.username}, id=u.id)
         user = cls.validate(
-            {**u.model_dump(), "username": u.username or u.id, "lang": u.language_code and Lang[u.language_code]}
+            {
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "username_id": un.id,
+                "lang": u.language_code and Lang[u.language_code],
+            }
         )
         if blocked is not None:
             user.blocked = blocked
@@ -73,6 +79,13 @@ class User(Model):
 
     # class Meta:
     #     abstract = True
+
+
+# @pre_save(User)
+# async def username(_meta, user: User, _db, _updated: dict) -> None:
+#     if user.username_id:
+#         return
+#     user.username = await Username.create(name=user.username)
 
 
 class Country(Model):
@@ -147,6 +160,9 @@ class Proxy(Model, TsTrait):
             reps = [convert(r, types.Replacement) for r in lst]
             return reps
 
+    def dict(self):
+        return dict(scheme="socks5", hostname=self.host, port=self.port, username=self.username, password=self.password)
+
 
 class Dc(TortModel):
     id: int = SmallIntField(True)
@@ -174,7 +190,7 @@ class App(Model):
     fcm: ForeignKeyNullableRelation[Fcm] = ForeignKeyField("models.Fcm", "apps", null=True)
     fcm_id: int
     platform: ClientPlatform = CharEnumFieldInstance(ClientPlatform)
-    owner: OneToOneRelation["User"] = OneToOneField("models.User", "app")
+    owner: OneToOneNullableRelation["User"] = OneToOneField("models.User", "app", null=True)
 
     sessions: BackwardFKRelation["Session"]
 
@@ -188,7 +204,7 @@ class Session(TortModel):
     test_mode = BooleanField(default=False)
     auth_key = BinaryField(null=True)
     date = IntField(default=0)  # todo: refact to datetime?
-    user: ForeignKeyNullableRelation[Username] = ForeignKeyField("models.Username", "sessions", null=True)
+    user: OneToOneNullableRelation[Username] = OneToOneField("models.Username", "session", null=True)
     user_id: int
     is_bot = CharField(42, null=True)
     state: dict = JSONField(default={})
