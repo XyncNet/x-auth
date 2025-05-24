@@ -196,7 +196,7 @@ class App(Model):
 
 
 class Session(TortModel):
-    id = CharField(85, primary_key=True)
+    id = BigIntField(True)
     api: ForeignKeyRelation[App] = ForeignKeyField("models.App", "sessions")
     api_id: int
     dc: ForeignKeyRelation[Dc] = ForeignKeyField("models.Dc", "sessions", default=2)
