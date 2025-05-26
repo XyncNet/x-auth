@@ -163,6 +163,9 @@ class Proxy(Model, TsTrait):
     def dict(self):
         return dict(scheme="socks5", hostname=self.host, port=self.port, username=self.username, password=self.password)
 
+    def str(self):
+        return f"http://{self.username}:{self.password}@{self.host}:{self.port}"
+
 
 class Dc(TortModel):
     id: int = SmallIntField(True)
