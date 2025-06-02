@@ -6,6 +6,14 @@ class Lang(IntEnum):
     en = 2
 
 
+class PeerType(IntEnum):
+    bot = 1
+    channel = 2
+    group = 3
+    supergroup = 4
+    user = 5
+
+
 class RoleScope(IntEnum):
     READ = 4  # read all
     WRITE = 2  # read and write own

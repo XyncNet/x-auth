@@ -30,7 +30,7 @@ from x_model.models import Model, TsTrait
 from tortoise import Model as TortModel
 from x_model.types import BaseUpd
 
-from x_auth.enums import Lang, Role
+from x_auth.enums import Lang, Role, PeerType
 from x_auth.types import AuthUser
 
 
@@ -226,7 +226,7 @@ class Peer(TortModel):
     username_id: int
     session: ForeignKeyRelation[Session] = ForeignKeyField("models.Session", "peers")
     session_id: int
-    type = CharField(127)
+    type: PeerType = IntEnumField(PeerType)
     phone_number = BigIntField(null=True)  # todo: rm (already moved to Username.phone)
     last_update_on: datetime | None = DatetimeSecField(auto_now=True)
 
