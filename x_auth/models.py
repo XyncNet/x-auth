@@ -77,6 +77,12 @@ class User(Model):
     async def is_blocked(cls, sid: str) -> bool:
         return (await cls[int(sid)]).blocked
 
+    @classmethod
+    async def pyro_upsert(cls, u: TgUser, blocked: bool = None) -> tuple["User", bool]:
+        user_in: cls.in_type() = await cls.tg2in(u, blocked)
+        prms = user_in.df_unq()
+        return await cls.update_or_create(**prms)
+
     # class Meta:
     #     abstract = True
 
