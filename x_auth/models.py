@@ -1,9 +1,11 @@
 from datetime import datetime
 
+from aiogram.utils.web_app import WebAppUser
 from aiohttp import ClientSession
 from msgspec import convert
 from pyrogram.enums.client_platform import ClientPlatform
-from pyrogram.types import User as TgUser
+from pyrogram.types import User as PyroUser
+from aiogram.types import User as AioUser
 from tortoise.fields import (
     BigIntField,
     BooleanField,
@@ -31,7 +33,6 @@ from tortoise import Model as TortModel
 from x_model.types import BaseUpd
 
 from x_auth.enums import Lang, Role, PeerType
-from x_auth.types import AuthUser
 
 
 class Username(TortModel):
@@ -55,11 +56,8 @@ class User(Model):
 
     app: BackwardOneToOneRelation["App"]
 
-    def get_auth(self) -> AuthUser:
-        return AuthUser.model_validate(self, from_attributes=True)
-
     @classmethod
-    async def tg2in(cls, u: TgUser, blocked: bool = None) -> BaseUpd:
+    async def tg2in(cls, u: PyroUser | AioUser | WebAppUser, blocked: bool = None) -> BaseUpd:
         un, _ = await cls._meta.fields_map["username"].related_model.update_or_create({"username": u.username}, id=u.id)
         user = cls.validate(
             {
@@ -78,20 +76,13 @@ class User(Model):
         return (await cls[int(sid)]).blocked
 
     @classmethod
-    async def pyro_upsert(cls, u: TgUser, blocked: bool = None) -> tuple["User", bool]:
+    async def tg_upsert(cls, u: PyroUser | AioUser, blocked: bool = None) -> tuple["User", bool]:
         user_in: cls.in_type() = await cls.tg2in(u, blocked)
         prms = user_in.df_unq()
         return await cls.update_or_create(**prms)
 
     # class Meta:
     #     abstract = True
-
-
-# @pre_save(User)
-# async def username(_meta, user: User, _db, _updated: dict) -> None:
-#     if user.username_id:
-#         return
-#     user.username = await Username.create(name=user.username)
 
 
 class Country(Model):
@@ -170,6 +161,7 @@ class Proxy(Model, TsTrait):
         return dict(scheme="socks5", hostname=self.host, port=self.port, username=self.username, password=self.password)
 
     def str(self):
+        # noinspection HttpUrlsUsage
         return f"http://{self.username}:{self.password}@{self.host}:{self.port}"
 
 
