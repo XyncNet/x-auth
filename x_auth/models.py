@@ -49,6 +49,7 @@ class User(Model):
     username: OneToOneRelation[Username] = OneToOneField("models.Username", "user")
     username_id: int
     first_name: str | None = CharField(63)
+    pic: str | None = CharField(127, null=True)
     last_name: str | None = CharField(31, null=True)
     blocked: bool = BooleanField(default=False)
     lang: Lang | None = IntEnumField(Lang, default=Lang.ru, null=True)
@@ -65,6 +66,7 @@ class User(Model):
                 "last_name": u.last_name,
                 "username_id": un.id,
                 "lang": u.language_code and Lang[u.language_code],
+                "pic": u.photo_url and u.photo_url.replace("https://t.me/i/userpic/320/", "")[:-4],
             }
         )
         if blocked is not None:

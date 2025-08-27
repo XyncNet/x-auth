@@ -1,9 +1,23 @@
 from datetime import datetime
-from typing import Literal
+from json import dumps
+from typing import Literal, Self
 
-from msgspec import Struct
+from msgspec import Struct, to_builtins, convert
 
 from x_auth.enums import Role
+
+
+class Xs(Struct):
+    def dump(self, nones: bool = False) -> dict:
+        return {k: v for k, v in to_builtins(self).items() if nones or v is not None}
+
+    def json(self, nones: bool = False) -> str:
+        return dumps(self.dump())
+
+    @classmethod
+    def load(cls, obj, **kwargs) -> Self:
+        dct = dict(obj)
+        return convert({**dct, **kwargs}, cls)  # , strict=False
 
 
 class AuthUser(Struct):
@@ -35,3 +49,13 @@ class Replacement(Struct):
     proxy_port: int
     proxy_country_code: str
     created_at: datetime
+
+
+class TgUser(Xs):
+    id: int
+    first_name: str
+    auth_date: int
+    hash: str
+    username: str | None = None
+    photo_url: str | None = None
+    last_name: str | None = None
