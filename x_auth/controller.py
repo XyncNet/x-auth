@@ -57,8 +57,8 @@ class Auth:
         async def tma(tid: str) -> Response[WebAppUser]:
             try:
                 twaid: WebAppInitData = safe_parse_webapp_init_data(self.jwt.token_secret, tid)
-            except ValueError:
-                raise NotAuthorizedException(detail="Tg Initdata invalid")
+            except ValueError as e:
+                raise NotAuthorizedException(detail=f"Tg Initdata invalid {e}")
             return await user_proc(twaid.user)
 
         self.tma_handler = tma
