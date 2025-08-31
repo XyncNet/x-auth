@@ -2,6 +2,7 @@ from datetime import datetime
 from json import dumps
 from typing import Literal, Self
 
+from aiogram.utils.web_app import WebAppUser
 from msgspec import Struct, to_builtins, convert
 
 from x_auth.enums import Role
@@ -59,3 +60,7 @@ class TgUser(Xs):
     username: str | None = None
     photo_url: str | None = None
     last_name: str | None = None
+
+
+class XyncUser(WebAppUser):
+    pub: bytes

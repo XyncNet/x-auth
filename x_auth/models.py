@@ -35,6 +35,10 @@ from x_model.types import BaseUpd
 from x_auth.enums import Lang, Role, PeerType
 
 
+class UniqBinaryField(BinaryField):
+    indexable = True
+
+
 class Username(TortModel):
     id: int = BigIntField(True, description="tg_id")
     username: str = CharField(127, null=True)
@@ -54,6 +58,8 @@ class User(Model):
     blocked: bool = BooleanField(default=False)
     lang: Lang | None = IntEnumField(Lang, default=Lang.ru, null=True)
     role: Role = IntEnumField(Role, default=Role.READER)
+    # prv = BinaryField(null=True)  # len=32
+    pub = UniqBinaryField(unique=True, null=True)  # len=32
 
     app: BackwardOneToOneRelation["App"]
 
