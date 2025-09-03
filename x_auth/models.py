@@ -27,7 +27,7 @@ from tortoise.fields import (
 from tortoise.fields.data import CharEnumFieldInstance
 
 from x_auth import types
-from x_model.field import DatetimeSecField, UIntField, UInt8Field, UniqBinaryField, UInt1Field, UInt2Field
+from x_model.field import DatetimeSecField, UInt8Field, UniqBinaryField, UInt1Field, UInt2Field
 from x_model.models import Model, TsTrait
 from tortoise import Model as TortModel
 from x_model.types import BaseUpd
@@ -36,7 +36,7 @@ from x_auth.enums import Lang, Role, PeerType
 
 
 class Username(TortModel):
-    id: int = UIntField(True, description="tg_id")
+    id: int = UInt8Field(True, description="tg_id")
     username: str = CharField(127, null=True)
     phone = UInt8Field(null=True)
 
@@ -187,7 +187,7 @@ class Fcm(TortModel):
 
 
 class App(Model):
-    id: int = UInt1Field(True)
+    id: int = IntField(True)
     hsh = CharField(32, unique=True)
     dc: ForeignKeyRelation[Dc] = ForeignKeyField("models.Dc", "apps", on_update=CASCADE, default=2)
     dc_id: int
