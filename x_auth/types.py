@@ -63,4 +63,4 @@ class TgUser(Xs):
 
 
 class XyncUser(WebAppUser):
-    pub: bytes
+    pub: bytes | None

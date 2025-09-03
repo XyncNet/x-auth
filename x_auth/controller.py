@@ -41,7 +41,9 @@ class Auth:
             res = self.jwt.login(
                 identifier=str(db_user.id),
                 token_extras={"role": db_user.role, "blocked": db_user.blocked},
-                response_body=XyncUser.model_validate({**user.model_dump(), "pub": b64encode(db_user.pub)}),
+                response_body=XyncUser.model_validate(
+                    {**user.model_dump(), "pub": db_user.pub and b64encode(db_user.pub)}
+                ),
             )
             res.cookies[0].httponly = False
             return res
