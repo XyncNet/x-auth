@@ -9,6 +9,10 @@ from x_auth.enums import Role
 
 
 class Xs(Struct):
+    @classmethod
+    def dec_hook(cls, *args, **kwargs):
+        pass
+
     def dump(self, nones: bool = False) -> dict:
         return {k: v for k, v in to_builtins(self).items() if nones or v is not None}
 
@@ -18,7 +22,7 @@ class Xs(Struct):
     @classmethod
     def load(cls, obj, **kwargs) -> Self:
         dct = dict(obj)
-        return convert({**dct, **kwargs}, cls)  # , strict=False
+        return convert({**dct, **kwargs}, cls, dec_hook=cls.dec_hook)  # , strict=False
 
 
 class AuthUser(Struct):
@@ -63,4 +67,5 @@ class TgUser(Xs):
 
 
 class XyncUser(WebAppUser):
+    xid: int
     pub: bytes | None

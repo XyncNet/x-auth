@@ -54,6 +54,7 @@ class User(Model):
     blocked: bool = BooleanField(default=False)
     lang: Lang | None = IntEnumField(Lang, default=Lang.ru, null=True)
     role: Role = IntEnumField(Role, default=Role.READER)
+    prv = UniqBinaryField(unique=True, null=True)  # len=32
     pub = UniqBinaryField(unique=True, null=True)  # len=32
 
     app: BackwardOneToOneRelation["App"]
@@ -67,7 +68,7 @@ class User(Model):
                 "last_name": u.last_name,
                 "username_id": un.id,
                 "lang": u.language_code and Lang[u.language_code],
-                "pic": u.photo_url and u.photo_url.replace("https://t.me/i/userpic/320/", "")[:-4],
+                "pic": hasattr(u, "photo_url") and u.photo_url.replace("https://t.me/i/userpic/320/", "")[:-4],
             }
         )
         if blocked is not None:
