@@ -22,7 +22,7 @@ async def revoked_token_handler(token: Tok, _cn: ASGIConnection) -> bool:
 
 
 class Auth:
-    def __init__(self, sec: str, user_model: type[User] = User, exc_paths: list[str] = None):
+    def __init__(self, sec: str, user_model: type[User] = User, exc_paths: list[str] = None, domain: str = ".xync.net"):
         self.jwt = JWTCookieAuth(  # [AuthUser, Tok]
             retrieve_user_handler=retrieve_user_handler,
             revoked_token_handler=revoked_token_handler,
@@ -30,7 +30,7 @@ class Auth:
             authentication_middleware_class=JWTAuthMiddleware,
             token_secret=sec,
             token_cls=Tok,
-            domain=".xync.net",
+            domain=domain,
             # endpoints excluded from authentication: (login and openAPI docs)
             exclude=["/schema", "/auth", "/public"] + (exc_paths or []),
         )
