@@ -36,7 +36,7 @@ from x_auth.enums import Lang, Role, PeerType
 
 
 class Username(TortModel):
-    id: int = UInt8Field(True, description="tg_id")
+    id: int = BigIntField(True, description="tg_id")
     username: str = CharField(127, null=True)
     phone = UInt8Field(null=True)
 
