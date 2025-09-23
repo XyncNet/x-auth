@@ -1,6 +1,8 @@
 from base64 import b64encode
 from datetime import timedelta
 
+from aiogram import Bot
+from aiogram.exceptions import TelegramForbiddenError
 from aiogram.utils.auth_widget import check_signature
 from aiogram.utils.web_app import WebAppInitData, safe_parse_webapp_init_data, WebAppUser
 from litestar import Response, post
@@ -18,7 +20,7 @@ async def retrieve_user_handler(token: Tok, _cn: ASGIConnection) -> AuthUser:
 
 
 async def revoked_token_handler(token: Tok, _cn: ASGIConnection) -> bool:
-    return token.extras["blocked"]
+    return False  # token.extras["blocked"]
 
 
 class Auth:
@@ -38,11 +40,25 @@ class Auth:
         async def user_proc(user: WebAppUser) -> Response[XyncUser]:
             user_in = await user_model.tg2in(user)
             db_user, cr = await user_model.update_or_create(**user_in.df_unq())  # on login: update user in db from tg
+            if user.allows_write_to_pm is None:
+                try:
+                    await Bot(sec).send_chat_action(user.id, "typing")
+                    db_user.blocked = False
+                except TelegramForbiddenError:
+                    db_user.blocked = True
+            else:
+                db_user.blocked = not user.allows_write_to_pm
+            await db_user.save()
             res = self.jwt.login(
                 identifier=str(db_user.id),
                 token_extras={"role": db_user.role, "blocked": db_user.blocked},
                 response_body=XyncUser.model_validate(
-                    {**user.model_dump(), "xid": db_user.id, "pub": db_user.pub and b64encode(db_user.pub)}
+                    {
+                        **user.model_dump(),
+                        "xid": db_user.id,
+                        "pub": db_user.pub and b64encode(db_user.pub),
+                        "allows_write_to_pm": user.allows_write_to_pm or not db_user.blocked,
+                    }
                 ),
             )
             res.cookies[0].httponly = False

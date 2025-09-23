@@ -51,7 +51,7 @@ class User(Model):
     first_name: str | None = CharField(63)
     pic: str | None = CharField(127, null=True)
     last_name: str | None = CharField(31, null=True)
-    blocked: bool = BooleanField(default=False)
+    blocked: bool = BooleanField(null=True)
     lang: Lang | None = IntEnumField(Lang, default=Lang.ru, null=True)
     role: Role = IntEnumField(Role, default=Role.READER)
     prv = UniqBinaryField(unique=True, null=True)  # len=32
@@ -68,7 +68,9 @@ class User(Model):
                 "last_name": u.last_name,
                 "username_id": un.id,
                 "lang": u.language_code and Lang[u.language_code],
-                "pic": hasattr(u, "photo_url") and u.photo_url.replace("https://t.me/i/userpic/320/", "")[:-4],
+                "pic": hasattr(u, "photo_url")
+                and u.photo_url
+                and u.photo_url.replace("https://t.me/i/userpic/320/", "")[:-4],
             }
         )
         if blocked is not None:
