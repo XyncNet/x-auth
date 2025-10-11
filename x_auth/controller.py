@@ -2,7 +2,7 @@ from base64 import b64encode
 from datetime import timedelta
 
 from aiogram import Bot
-from aiogram.exceptions import TelegramForbiddenError
+from aiogram.exceptions import TelegramForbiddenError, TelegramBadRequest
 from aiogram.utils.auth_widget import check_signature
 from aiogram.utils.web_app import WebAppInitData, safe_parse_webapp_init_data, WebAppUser
 from litestar import Response, post
@@ -44,7 +44,7 @@ class Auth:
                 try:
                     await Bot(sec).send_chat_action(user.id, "typing")
                     db_user.blocked = False
-                except TelegramForbiddenError:
+                except (TelegramForbiddenError, TelegramBadRequest):
                     db_user.blocked = True
             else:
                 db_user.blocked = not user.allows_write_to_pm

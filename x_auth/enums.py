@@ -13,6 +13,7 @@ class PeerType(IntEnum):
     supergroup = 4
     user = 5
     forum = 6
+    direct = 7
 
 
 class RoleScope(IntEnum):
