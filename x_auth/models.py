@@ -27,10 +27,9 @@ from tortoise.fields import (
 from tortoise.fields.data import CharEnumFieldInstance
 
 from x_auth import types
-from x_model.field import DatetimeSecField, UInt8Field, UniqBinaryField, UInt1Field, UInt2Field
+from x_model.field import DatetimeSecField, UInt8Field, UInt1Field, UInt2Field
 from x_model.models import Model, TsTrait
 from tortoise import Model as TortModel
-from x_model.types import BaseUpd
 
 from x_auth.enums import Lang, Role, PeerType
 
@@ -54,28 +53,29 @@ class User(Model):
     blocked: bool = BooleanField(null=True)
     lang: Lang | None = IntEnumField(Lang, default=Lang.ru, null=True)
     role: Role = IntEnumField(Role, default=Role.READER)
-    prv = UniqBinaryField(unique=True, null=True)  # len=32
-    pub = UniqBinaryField(unique=True, null=True)  # len=32
 
     app: BackwardOneToOneRelation["App"]
 
     @classmethod
-    async def tg2in(cls, u: PyroUser | AioUser | WebAppUser, blocked: bool = None) -> BaseUpd:
+    async def tg2in(cls, u: PyroUser | AioUser | WebAppUser, blocked: bool = None) -> dict:
         un, _ = await cls._meta.fields_map["username"].related_model.update_or_create({"username": u.username}, id=u.id)
-        user = cls.validate(
-            {
-                "first_name": u.first_name,
-                "last_name": u.last_name,
-                "username_id": un.id,
-                "lang": u.language_code and Lang[u.language_code],
-                "pic": hasattr(u, "photo_url")
-                and u.photo_url
-                and u.photo_url.replace("https://t.me/i/userpic/320/", "")[:-4],
-            }
+        pic = hasattr(u, "photo_url") and u.photo_url and u.photo_url.replace("https://t.me/i/userpic/320/", "")[:-4]
+        pic = (
+            pic
+            or isinstance(u, AioUser)
+            and (photos := (await u.bot.get_user_profile_photos(u.id)).photos)
+            and photos[0][-1].file_id
+            or None
         )
+        user_dict = {
+            "first_name": u.first_name,
+            "last_name": u.last_name,
+            "lang": u.language_code and Lang[u.language_code],
+            "pic": pic,
+        }
         if blocked is not None:
-            user.blocked = blocked
-        return user
+            user_dict["blocked"] = blocked
+        return user_dict
 
     @classmethod
     async def is_blocked(cls, sid: str) -> bool:
@@ -83,12 +83,8 @@ class User(Model):
 
     @classmethod
     async def tg_upsert(cls, u: PyroUser | AioUser, blocked: bool = None) -> tuple["User", bool]:
-        user_in: cls.in_type() = await cls.tg2in(u, blocked)
-        prms = user_in.df_unq()
-        return await cls.update_or_create(**prms)
-
-    # class Meta:
-    #     abstract = True
+        user_in: dict = await cls.tg2in(u, blocked)
+        return await cls.update_or_create(user_in, username_id=u.id)
 
 
 class Country(Model):
