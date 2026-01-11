@@ -82,7 +82,7 @@ class User(Model):
         return (await cls[int(sid)]).blocked
 
     @classmethod
-    async def tg_upsert(cls, u: PyroUser | AioUser, blocked: bool = None) -> tuple["User", bool]:
+    async def tg_upsert(cls, u: PyroUser | AioUser | WebAppUser, blocked: bool = None) -> tuple["User", bool]:
         user_in: dict = await cls.tg2in(u, blocked)
         return await cls.update_or_create(user_in, username_id=u.id)
 

@@ -38,8 +38,7 @@ class Auth:
         )
 
         async def user_proc(user: WebAppUser) -> Response[XyncUser]:
-            user_in = await user_model.tg2in(user)
-            db_user, cr = await user_model.update_or_create(**user_in.df_unq())  # on login: update user in db from tg
+            db_user, cr = await user_model.tg_upsert(user)  # on login: update user in db from tg
             if user.allows_write_to_pm is None:
                 try:
                     await Bot(sec).send_chat_action(user.id, "typing")
