@@ -61,6 +61,7 @@ class Auth:
                     }
                 ),
             )
+            logging.warning({db_user.id: res.cookies[0]})
             res.cookies[0].httponly = False
             return res
 
@@ -79,7 +80,6 @@ class Auth:
             except ValueError as e:
                 logging.error(e)
                 raise NotAuthorizedException(detail=f"Tg Initdata invalid {e}")
-            logging.warning({tid: twaid})
             return await user_proc(twaid.user)
 
         self.tma_handler = tma
