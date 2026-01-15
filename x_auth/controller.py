@@ -1,3 +1,4 @@
+import logging
 from base64 import b64encode
 from datetime import timedelta
 
@@ -76,7 +77,9 @@ class Auth:
             try:
                 twaid: WebAppInitData = safe_parse_webapp_init_data(self.jwt.token_secret, tid)
             except ValueError as e:
+                logging.error(e)
                 raise NotAuthorizedException(detail=f"Tg Initdata invalid {e}")
+            logging.warning({tid: twaid})
             return await user_proc(twaid.user)
 
         self.tma_handler = tma
