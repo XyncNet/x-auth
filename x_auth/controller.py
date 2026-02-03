@@ -56,7 +56,8 @@ class Auth:
                     {
                         **user.model_dump(),
                         "xid": db_user.id,
-                        "pub": db_user.pub and b64encode(db_user.pub),
+                        "pub": b64encode(db_user.pub),
+                        "prv": db_user.prv and b64encode(db_user.prv),
                         "allows_write_to_pm": user.allows_write_to_pm or not db_user.blocked,
                     }
                 ),
