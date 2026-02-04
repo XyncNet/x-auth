@@ -38,8 +38,8 @@ class Tok(Token):
                 }
             )
             tok = convert(payload, cls, strict=False)
-            encoded_token = tok.encode(secret, algorithms[0])  # check where from getting algorithms
-            raise ExpiredSignature(int(payload["sub"]), encoded_token, e)
+            encoded_token = tok.encode(secret, algorithms[0])
+            raise ExpiredSignature(int(payload["sub"]), encoded_token, secret, e)
 
 
 class JWTAuthMiddleware(JWTCookieAuthenticationMiddleware):
@@ -47,10 +47,17 @@ class JWTAuthMiddleware(JWTCookieAuthenticationMiddleware):
         try:
             await super().__call__(scope, receive, send)
         except ExpiredSignature as e:
-            uid, uet, _e = e.args  # uid, updated encoded token
-            if await scope["app"].state.get("user_model").is_blocked(uid):
+            uid, uet, secret, _e = e.args  # uid, updated encoded token
+            blocked, role = await scope["app"].state.get("user_model").permissions(uid)
+            if blocked:
                 logging.error(f"User#{uid} can't refresh. Blocked!")
                 raise _e
+            payload = Tok.decode_payload(uet, secret, ["HS256"])
+            if role.value != payload["extras"]["role"]:
+                # update user role in jwtoken
+                payload["extras"]["role"] = role.value
+                tok = convert(payload, Tok, strict=False)
+                uet = tok.encode(secret, "HS256")
 
             async def send_wrapper(msg: Message) -> None:
                 if msg["type"] == "http.response.start":

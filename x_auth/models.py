@@ -78,8 +78,9 @@ class User(Model):
         return user_dict
 
     @classmethod
-    async def is_blocked(cls, sid: str) -> bool:
-        return (await cls[int(sid)]).blocked
+    async def permissions(cls, self_id: str) -> tuple[bool, Role]:
+        user = await cls[self_id]
+        return user.blocked, user.role
 
     @classmethod
     async def tg_upsert(cls, u: PyroUser | AioUser | WebAppUser, blocked: bool = None) -> tuple["User", bool]:
