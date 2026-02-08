@@ -4,6 +4,7 @@ from typing import Sequence, Any
 
 from jwt import ExpiredSignatureError
 from litestar.datastructures import MutableScopeHeaders, Headers
+from litestar.exceptions import NotAuthorizedException
 
 # from litestar.exceptions import NotAuthorizedException
 from litestar.types import Scope, Receive, Send, Message
@@ -69,9 +70,10 @@ class JWTAuthMiddleware(JWTCookieAuthenticationMiddleware):
             # noinspection PyUnresolvedReferences
             scope["state"]["_ls_connection_state"].headers = Headers({"authorization": "Bearer " + uet})
             await super().__call__(scope, receive, send_wrapper)
+        except NotAuthorizedException as e:
+            if e.detail == "No JWT token found in request header or cookies" and e.status_code == 401:
+                logging.error(e)
+            raise e
         except Exception as e:
             logging.error(scope)
             raise e
-        # except NotAuthorizedException as e:
-        #     if e.detail == "No JWT token found in request header or cookies" and e.status_code == 401:
-        #         return e
