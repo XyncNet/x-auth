@@ -2,6 +2,7 @@ from datetime import datetime
 
 from aiogram.utils.web_app import WebAppUser
 from aiohttp import ClientSession
+from litestar.exceptions import NotFoundException
 from msgspec import convert
 from pyrogram.enums.client_platform import ClientPlatform
 from pyrogram.types import User as PyroUser
@@ -79,8 +80,9 @@ class User(Model):
 
     @classmethod
     async def permissions(cls, self_id: str) -> tuple[bool, Role]:
-        user = await cls[self_id]
-        return user.blocked, user.role
+        if user := await cls.get_or_none(id=self_id):
+            return user.blocked, user.role
+        raise NotFoundException(f"Wrong Token: no User#{self_id}")
 
     @classmethod
     async def tg_upsert(cls, u: PyroUser | AioUser | WebAppUser, blocked: bool = None) -> tuple["User", bool]:

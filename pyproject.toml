@@ -13,6 +13,7 @@ dynamic = ["version"]
 dependencies = [
     'aiogram',
     'kurigram',
+    'litestar',
     'msgspec',
     "pyjwt",
     "xn-model"
