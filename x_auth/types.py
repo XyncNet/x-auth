@@ -1,28 +1,11 @@
 from datetime import datetime
-from json import dumps
-from typing import Literal, Self
+from typing import Literal
 
 from aiogram.utils.web_app import WebAppUser
-from msgspec import Struct, to_builtins, convert
+from msgspec import Struct
+from x_model.types import Xs
 
 from x_auth.enums import Role
-
-
-class Xs(Struct):
-    @classmethod
-    def dec_hook(cls, *args, **kwargs):
-        pass
-
-    def dump(self, nones: bool = False) -> dict:
-        return {k: v for k, v in to_builtins(self).items() if nones or v is not None}
-
-    def json(self, nones: bool = False) -> str:
-        return dumps(self.dump())
-
-    @classmethod
-    def load(cls, obj, **kwargs) -> Self:
-        dct = dict(obj)
-        return convert({**dct, **kwargs}, cls, dec_hook=cls.dec_hook)  # , strict=False
 
 
 class AuthUser(Struct):

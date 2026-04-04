@@ -37,7 +37,7 @@ from x_auth.enums import Lang, Role, PeerType
 
 class Username(TortModel):
     id: int = BigIntField(True, description="tg_id")
-    username: str = CharField(127, null=True)
+    username: str = CharField(127, null=True, unique=True)
     phone = UInt8Field(null=True)
 
     user: BackwardOneToOneRelation["User"]
