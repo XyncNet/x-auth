@@ -24,6 +24,7 @@ from tortoise.fields import (
     ForeignKeyNullableRelation,
     JSONField,
     CASCADE,
+    Now,
 )
 from tortoise.fields.data import CharEnumFieldInstance
 
@@ -44,6 +45,9 @@ class Username(TortModel):
     peers: BackwardFKRelation["Peer"]
     session: BackwardOneToOneRelation["Session"]
 
+    def nick_or_id(self):
+        return "@" + self.username if self.username else f"id: {self.id}"
+
 
 class User(Model):
     username: OneToOneRelation[Username] = OneToOneField("models.Username", "user", on_update=CASCADE)
@@ -52,8 +56,8 @@ class User(Model):
     pic: str | None = CharField(127, null=True)
     last_name: str | None = CharField(31, null=True)
     blocked: bool = BooleanField(null=True)
-    lang: Lang | None = IntEnumField(Lang, default=Lang.ru, null=True)
-    role: Role = IntEnumField(Role, default=Role.READER)
+    lang: Lang | None = IntEnumField(Lang, db_default=Lang.ru, null=True)
+    role: Role = IntEnumField(Role, db_default=Role.READER)
 
     app: BackwardOneToOneRelation["App"]
 
@@ -183,7 +187,7 @@ class Dc(TortModel):
 
 class Fcm(TortModel):
     id: int = UInt1Field(True)
-    json: dict = JSONField(default={})
+    json: dict = JSONField(db_default={})
 
     apps: BackwardFKRelation["App"]
 
@@ -191,11 +195,11 @@ class Fcm(TortModel):
 class App(Model):
     id: int = IntField(True)
     hsh = CharField(32, unique=True)
-    dc: ForeignKeyRelation[Dc] = ForeignKeyField("models.Dc", "apps", on_update=CASCADE, default=2)
+    dc: ForeignKeyRelation[Dc] = ForeignKeyField("models.Dc", "apps", on_update=CASCADE, db_default=2)
     dc_id: int
     title = CharField(127)
     short = CharField(76)
-    ver = CharField(18, default="0.0.1")
+    ver = CharField(18, db_default="0.0.1")
     fcm: ForeignKeyNullableRelation[Fcm] = ForeignKeyField("models.Fcm", "apps", on_update=CASCADE, null=True)
     fcm_id: int
     platform: ClientPlatform = CharEnumFieldInstance(ClientPlatform)
@@ -208,15 +212,15 @@ class Session(TortModel):
     id = BigIntField(True)
     api: ForeignKeyRelation[App] = ForeignKeyField("models.App", "sessions", on_update=CASCADE)
     api_id: int
-    dc: ForeignKeyRelation[Dc] = ForeignKeyField("models.Dc", "sessions", on_update=CASCADE, default=2)
+    dc: ForeignKeyRelation[Dc] = ForeignKeyField("models.Dc", "sessions", on_update=CASCADE, db_default=2)
     dc_id: int
-    test_mode = BooleanField(default=False)
+    test_mode = BooleanField(db_default=False)
     auth_key = BinaryField(null=True)
-    date = IntField(default=0)  # todo: refact to datetime?
+    date = IntField(db_default=0)  # todo: refact to datetime?
     user: OneToOneNullableRelation[Username] = OneToOneField("models.Username", "session", on_update=CASCADE, null=True)
     user_id: int
     is_bot = CharField(42, null=True)
-    state: dict = JSONField(default={})
+    state: dict = JSONField(db_default={})
     proxy: ForeignKeyNullableRelation[Proxy] = ForeignKeyField("models.Proxy", "sessions", on_update=CASCADE, null=True)
 
     peers: BackwardFKRelation["Peer"]
@@ -234,7 +238,7 @@ class Peer(TortModel):
     session_id: int
     type: PeerType = IntEnumField(PeerType)
     phone_number = UInt8Field(null=True)  # duplicated to Username.phone
-    last_update_on: datetime | None = DatetimeSecField(auto_now=True)
+    last_update_on: datetime | None = DatetimeSecField(auto_now=True, db_default=Now())
 
     class Meta:
         unique_together = (("username_id", "session_id"),)
