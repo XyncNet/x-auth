@@ -72,7 +72,9 @@ class JWTAuthMiddleware(JWTCookieAuthenticationMiddleware):
             await super().__call__(scope, receive, send_wrapper)
         except NotAuthorizedException as e:
             if e.detail == "No JWT token found in request header or cookies" and e.status_code == 401:
-                logging.error(e)
+                # клиент не прислал токен (кука удалена браузером по max_age) — штатный кейс,
+                # не ERROR: ERROR-записи уходят админ-алертом в TG
+                logging.warning(e)
             raise e
         except Exception as e:
             logging.error(scope)

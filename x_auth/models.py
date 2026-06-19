@@ -107,8 +107,8 @@ class Proxy(Model, TsTrait):
     id: int = CharField(63, primary_key=True)
     host: str = CharField(63)
     port: str = UInt2Field()
-    username: str = CharField(63)
-    password: str = CharField(63)
+    username: str = CharField(63, null=True)
+    password: str = CharField(63, null=True)
     valid: bool = BooleanField(null=True)
     country: ForeignKeyRelation[Country] = ForeignKeyField(
         "models.Country", "proxies", on_update=CASCADE, null=True

@@ -7,6 +7,7 @@ from aiogram.exceptions import TelegramForbiddenError, TelegramBadRequest
 from aiogram.utils.auth_widget import check_signature
 from aiogram.utils.web_app import WebAppInitData, safe_parse_webapp_init_data, WebAppUser
 from litestar import Response, post
+from litestar.config.app import AppConfig
 from litestar.connection import ASGIConnection
 from litestar.exceptions import NotAuthorizedException
 from litestar.security.jwt import JWTCookieAuth
@@ -37,6 +38,7 @@ class Auth:
             # endpoints excluded from authentication: (login and openAPI docs)
             exclude=["/schema", "/auth", "/public"] + (exc_paths or []),
         )
+        self.user_model = user_model
 
         async def user_proc(user: WebAppUser) -> Response[XyncUser]:
             db_user, cr = await user_model.tg_upsert(user)  # on login: update user in db from tg
@@ -85,3 +87,10 @@ class Auth:
 
         self.tma_handler = tma
         self.twa_handler = twa
+
+    def on_app_init(self, app_config: AppConfig) -> AppConfig:
+        # JWTAuthMiddleware's silent-refresh path looks the user model up from app state
+        # (`app.state["user_model"].permissions(uid)`); register it here so that contract
+        # holds. Register on the app this Auth guards instead of leaving it to each caller.
+        app_config.state["user_model"] = self.user_model
+        return self.jwt.on_app_init(app_config)
