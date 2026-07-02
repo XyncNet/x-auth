@@ -173,7 +173,7 @@ class Proxy(Model, TsTrait):
 
     def str(self):
         # noinspection HttpUrlsUsage
-        return f"http://{self.username}:{self.password}@{self.host}:{self.port}"
+        return f"http://{self.username + ':' + self.password + '@' if self.username else ''}{self.host}:{self.port}"
 
 
 class Dc(TortModel):
