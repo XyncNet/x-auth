@@ -75,7 +75,7 @@ class User(Model):
         user_dict = {
             "first_name": u.first_name,
             "last_name": u.last_name,
-            "lang": u.language_code and Lang[u.language_code],
+            "lang": Lang.ru if u.language_code == "ru" else Lang.en,
             "pic": pic,
         }
         if blocked is not None:
