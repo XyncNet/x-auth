@@ -29,7 +29,7 @@ from tortoise.fields import (
 from tortoise.fields.data import CharEnumFieldInstance
 
 from x_auth import types
-from x_model.field import DatetimeSecField, UInt8Field, UInt1Field, UInt2Field
+from x_model.field import DatetimeSecField, UInt8Field, UInt1Field, UInt2Field, UInt4Field
 from x_model.models import Model, TsTrait
 from tortoise import Model as TortModel
 
@@ -245,12 +245,17 @@ class Peer(TortModel):
 
 
 class UpdateState(TortModel):
-    id = UInt2Field(True)
+    id: int = IntField(True)
     session: ForeignKeyRelation[Session] = ForeignKeyField("models.Session", "update_states", on_update=CASCADE)
-    pts = UInt2Field()
-    qts = UInt2Field()
-    date = UInt2Field()
-    seq = UInt2Field()
+    session_id: int
+    chat_id = BigIntField(db_default=0, description="pyrogram get_channel_id(-100..), 0 = common state")
+    pts = UInt4Field()
+    qts = UInt4Field(null=True)  # pyrogram шлёт None на update-пути, значение приходит только из recover_gaps
+    date = UInt4Field()
+    seq = UInt4Field(null=True)  # None на UpdateShort(Chat)Message
+
+    class Meta:
+        unique_together = (("session_id", "chat_id"),)
 
 
 class Version(TortModel):
