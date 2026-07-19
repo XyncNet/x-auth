@@ -26,25 +26,32 @@ async def revoked_token_handler(token: Tok, _cn: ASGIConnection) -> bool:
 
 
 class Auth:
-    def __init__(self, sec: str, user_model: type[User] = User, exc_paths: list[str] = None, domain: str = ".xync.net"):
+    def __init__(
+        self,
+        bot: Bot,  # the app's ONE shared bot; its token doubles as the JWT secret — never construct a Bot per call
+        user_model: type[User] = User,
+        exc_paths: list[str] = None,
+        domain: str = ".xync.net",
+    ):
         self.jwt = JWTCookieAuth(  # [AuthUser, Tok]
             retrieve_user_handler=retrieve_user_handler,
             revoked_token_handler=revoked_token_handler,
             default_token_expiration=timedelta(minutes=1),
             authentication_middleware_class=JWTAuthMiddleware,
-            token_secret=sec,
+            token_secret=bot.token,
             token_cls=Tok,
             domain=domain,
             # endpoints excluded from authentication: (login and openAPI docs)
             exclude=["/schema", "/auth", "/public"] + (exc_paths or []),
         )
         self.user_model = user_model
+        self.bot = bot
 
         async def user_proc(user: WebAppUser) -> Response[XyncUser]:
             db_user, cr = await user_model.tg_upsert(user)  # on login: update user in db from tg
             if user.allows_write_to_pm is None:
                 try:
-                    await Bot(sec).send_chat_action(user.id, "typing")
+                    await self.bot.send_chat_action(user.id, "typing")
                     db_user.blocked = False
                 except (TelegramForbiddenError, TelegramBadRequest):
                     db_user.blocked = True
